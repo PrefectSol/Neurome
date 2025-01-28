@@ -56,7 +56,7 @@ void Neurome::start()
 			return;
 		}
 
-		/*if (userConfig.isFullscreen)
+		if (userConfig.isFullscreen)
 		{
 			std::cerr << "WARN: The application is open in full-screen mode. Switching to windowed mode..." << std::endl;
 			
@@ -70,7 +70,7 @@ void Neurome::start()
 			std::this_thread::sleep_for(std::chrono::seconds(2));
 
 			continue;
-		}*/
+		}
 
 		if (!m_controller.setActionKey(userConfig.keyLeft))
 		{
@@ -101,7 +101,7 @@ void Neurome::start()
 				std::cout << "frame preprocessing time: " << double(clock() - start) << "ms" << std::endl;
 
 				cv::imshow("Window Capture", frame);
-				cv::waitKey(27);
+				cv::waitKey(1);
 
 
 				//const std::string header = "Session #" + std::to_string(sessionCount);
