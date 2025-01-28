@@ -119,7 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>K:\Code\C++\Neurome\Neurome\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include\torch\csrc\api\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include;K:\Libraries\opencv\build\include;K:\Libraries\osu-memory\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>K:\Code\C++\Neurome\Neurome\include;K:\Libraries\opencv\build\include;K:\Libraries\osu-memory\native\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
@@ -128,8 +128,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\lib;K:\Libraries\opencv\build\x64\vc16\lib;K:\Libraries\osu-memory\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world4100.lib;opencv_world4100d.lib;osu-memory.lib;libprotoc.lib;pthreadpool.lib;sleef.lib;torch.lib;torch_cpu.lib;torch_cuda.lib;XNNPACK.lib;asmjit.lib;c10.lib;c10_cuda.lib;caffe2_nvrtc.lib;cpuinfo.lib;dnnl.lib;fbgemm.lib;fmt.lib;kineto.lib;libprotobuf.lib;libprotobuf-lite.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>K:\Libraries\opencv\build\x64\vc16\lib;K:\Libraries\osu-memory\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world4100.lib;opencv_world4100d.lib;osu-memory.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
