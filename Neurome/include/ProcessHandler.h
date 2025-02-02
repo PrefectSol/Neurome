@@ -5,10 +5,11 @@
 #include <cstdint>
 #include <thread>
 #include <mutex>
-#include <chrono>
 
 #include <Windows.h>
 #include <tlhelp32.h>
+#include <netfw.h>
+#include <comutil.h>
 
 #include <opencv2/opencv.hpp>
 #include <torch/torch.h>
@@ -16,7 +17,7 @@
 #define FRAME_CHECKER
 #define INTERPOLATION cv::INTER_NEAREST
 
-class ProcessHandler
+class ProcessHandler 
 {
 public:
 	explicit ProcessHandler();
@@ -29,10 +30,6 @@ public:
 
 	bool restart();
 
-	/// <summary>
-	/// Блокировка входящего/исходящего сетевого трафика процесса
-	/// </summary>
-	/// <returns>true - трафик заблокирован, false - невозможно заблокировать трафик</returns>
 	bool blockTraffic();
 
 	std::string getProcessPath() const;
@@ -42,6 +39,15 @@ public:
 	bool getCaptureWindow(torch::Tensor *capture, int32_t width, int32_t height) const;
 
 private:
+
+	INetFwPolicy2* ProcessPolicy;
+
+	INetFwRules* ProcessRules;
+
+	INetFwRule2* NewProcessRule;
+
+	HRESULT NewRuleResult;
+
 	HWND m_window;
 
 	HDC m_hdcWindow;
@@ -65,6 +71,8 @@ private:
 	HWND getWindowByProcessIdTimed(DWORD processId, uint32_t timeout, uint32_t delay) const;
 
 	bool initializeCapture();
+
+	void CleanUpNetBarrier();
 
 	void cleanupCapture();
 };

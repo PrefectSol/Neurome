@@ -1,12 +1,22 @@
 #include "ProcessHandler.h"
 
-ProcessHandler::ProcessHandler() 
+ProcessHandler::ProcessHandler()
     : m_window(NULL), m_hdcWindow(NULL), m_hdcMemory(NULL),
     m_hBitmap(NULL), m_windowRect(), m_sourceWidth(0), m_sourceHeight(0),
-    m_processId(0) {}
+    m_processId(0), ProcessPolicy(nullptr), ProcessRules(nullptr), NewProcessRule(nullptr) {
+    
+    CoInitialize(NULL);
+
+    NewRuleResult = CoCreateInstance(__uuidof(NetFwRule),
+        NULL,
+        CLSCTX_ALL,
+        __uuidof(INetFwRule2),
+        (void**)&NewProcessRule);
+}
 
 ProcessHandler::~ProcessHandler() 
 {
+    CleanUpNetBarrier();
     cleanupCapture();
 }
 
@@ -116,9 +126,36 @@ bool ProcessHandler::restart()
 
 bool ProcessHandler::blockTraffic()
 {
-    // ...
+    BSTR BSTRPath = SysAllocString(_com_util::ConvertStringToBSTR(getProcessPath().c_str()));
 
-    return false;
+
+    if (!BSTRPath)
+        return FALSE;
+
+    HRESULT RuleResult = CoCreateInstance(__uuidof(NetFwPolicy2),
+        NULL,
+        CLSCTX_ALL,
+        __uuidof(INetFwPolicy2),
+        (void**)&ProcessPolicy);
+
+    if (SUCCEEDED(RuleResult) && !ProcessPolicy)
+        RuleResult = ProcessPolicy->get_Rules(&ProcessRules);
+    else
+        return FALSE;
+
+    NewProcessRule->put_Name((BSTR)L"NetBarrier");
+    NewProcessRule->put_Action(NET_FW_ACTION_BLOCK);
+    NewProcessRule->put_Direction(NET_FW_RULE_DIR_MAX);
+    NewProcessRule->put_Profiles(NET_FW_PROFILE2_ALL);
+    NewProcessRule->put_Protocol(NET_FW_IP_PROTOCOL_TCP);
+    NewProcessRule->put_Enabled(VARIANT_TRUE);
+    NewProcessRule->put_ApplicationName(BSTRPath);
+
+    RuleResult = ProcessRules->Add(NewProcessRule);
+
+    SysFreeString(BSTRPath);
+
+    return TRUE;
 }
 
 std::string ProcessHandler::getProcessPath() const
@@ -368,6 +405,29 @@ bool ProcessHandler::initializeCapture()
     SelectObject(m_hdcMemory, m_hBitmap);
 
     return true;
+}
+
+void ProcessHandler::CleanUpNetBarrier(){
+    if (!ProcessRules)
+    {
+        ProcessRules->Release();
+        ProcessRules = nullptr;
+    }
+
+
+    if (!ProcessPolicy)
+    {
+        ProcessPolicy->Release();
+        ProcessPolicy = nullptr;
+    }
+
+    if (!ProcessRules)
+    {
+        NewProcessRule->Release();
+        NewProcessRule = nullptr;
+    }
+
+    CoUninitialize();
 }
 
 void ProcessHandler::cleanupCapture() 
