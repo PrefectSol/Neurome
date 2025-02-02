@@ -10,7 +10,7 @@
 #include <tlhelp32.h>
 #include <netfw.h>
 #include <comutil.h>
-
+#include <comdef.h>
 #include <opencv2/opencv.hpp>
 #include <torch/torch.h>
 

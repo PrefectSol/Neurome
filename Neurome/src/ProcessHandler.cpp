@@ -122,7 +122,6 @@ bool ProcessHandler::blockTraffic()
 {
     BSTR BSTRPath = SysAllocString(_com_util::ConvertStringToBSTR(getProcessPath().c_str()));
 
-
     if (!BSTRPath)
         return FALSE;
 
@@ -132,14 +131,17 @@ bool ProcessHandler::blockTraffic()
         __uuidof(INetFwPolicy2),
         (void**)&ProcessPolicy);
 
-    if (SUCCEEDED(RuleResult) && !ProcessPolicy)
+    if (SUCCEEDED(RuleResult)) {
         RuleResult = ProcessPolicy->get_Rules(&ProcessRules);
-    else
+    }
+    else {
+
         return FALSE;
+    }
 
     NewProcessRule->put_Name((BSTR)L"NetBarrier");
     NewProcessRule->put_Action(NET_FW_ACTION_BLOCK);
-    NewProcessRule->put_Direction(NET_FW_RULE_DIR_MAX);
+    NewProcessRule->put_Direction(NET_FW_RULE_DIR_OUT);
     NewProcessRule->put_Profiles(NET_FW_PROFILE2_ALL);
     NewProcessRule->put_Protocol(NET_FW_IP_PROTOCOL_TCP);
     NewProcessRule->put_Enabled(VARIANT_TRUE);
