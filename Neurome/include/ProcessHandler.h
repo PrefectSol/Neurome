@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <thread>
 #include <mutex>
+#include <chrono>
 
 #include <Windows.h>
 #include <tlhelp32.h>
@@ -60,6 +61,8 @@ private:
 	DWORD getProcessIdByPartialName(const std::wstring &partialName) const;
 
 	HWND getWindowByProcessId(DWORD processId) const;
+
+	HWND getWindowByProcessIdTimed(DWORD processId, uint32_t timeout, uint32_t delay) const;
 
 	bool initializeCapture();
 
