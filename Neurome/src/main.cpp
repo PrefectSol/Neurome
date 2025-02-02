@@ -12,8 +12,17 @@ int main(int argc, const char *argv[])
 		return -1;
 	}
 
-	Neurome client;
-	client.start();
+	try
+	{
+		Neurome client;
+		client.start();
 
-	return client.exit();
+		return client.exit();
+	}
+	catch (const std::exception &exp)
+	{
+		std::cerr << "CRITICAL ERROR:" << std::endl << exp.what() << std::endl;
+	}
+
+	return -1;
 }

@@ -11,7 +11,7 @@ class Agent : public torch::nn::Module
 public:
 	explicit Agent(uint32_t hiddenSize);
 
-	std::tuple<torch::Tensor, torch::Tensor> forward(torch::Tensor x);
+	torch::Tensor forward(torch::Tensor x);
 
 private:
     torch::nn::Conv2d m_stemConv;

@@ -17,6 +17,7 @@
 #include "ProcessHandler.h"
 #include "MemoryReader.h"
 #include "Controller.h"
+#include "ProximalPolicyOptimization.h"
 #include "utils.h"
 
 class Neurome
@@ -42,7 +43,8 @@ private:
 		NotAwait,
 		GetWindowError,
 		CaptureWindowError,
-
+		DeviceError,
+		AgentInitializeError
 	};
 
 	typedef struct Settings
@@ -51,18 +53,38 @@ private:
 		bool isAwaitProcess;
 		uint32_t awaitProcessDelay;
 		std::string pauseHotKey;
+		std::string modelPath;
 		uint32_t inputWidth;
 		uint32_t inputHeight;
+		uint32_t hiddenSize;
+		uint32_t epochs;
+		uint32_t bufferSize;
+		float actorLr;
+		float criticLr;
+		float gamma;
+		float epsilon;
 
 		explicit Settings(std::string clientName, bool isAwaitProcess,
-						  uint32_t awaitProcessDelay, std::string pauseHotKey,
-						  uint32_t inputWidth, uint32_t inputHeight);
+						  uint32_t awaitProcessDelay, std::string pauseHotKey, std::string modelPath,
+						  uint32_t inputWidth, uint32_t inputHeight,
+			              uint32_t hiddenSize, uint32_t epochs, uint32_t bufferSize,
+						  float actorLr, float criticLr, float gamma, float epsilon);
 
 		void init(std::string settingsPath);
 
 		ResultCode merge(ConfigHandler *configHandler);
 
 		void print() const;
+
+		void parseStr(ConfigHandler *configHandler, std::string *value, std::string field);
+
+		void parseUInt(ConfigHandler *configHandler, uint32_t *value, std::string field);
+
+		void parseFloat(ConfigHandler *configHandler, float *value, std::string field);
+
+		void parseBool(ConfigHandler *configHandler, bool *value, std::string field);
+
+		void parseKey(ConfigHandler *configHandler, std::string *value, std::string field);
 
 	} Settings_t;
 
@@ -95,5 +117,7 @@ private:
 	MemoryReader m_memoryReader;
 
 	Controller m_controller;
+
+	ProximalPolicyOptimization m_ppo;
 };
 #endif // !__NEUROME_H

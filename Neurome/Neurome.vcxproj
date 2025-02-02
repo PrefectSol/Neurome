@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\ProximalPolicyOptimization.cpp" />
     <ClCompile Include="src\Agent.cpp" />
     <ClCompile Include="src\MBConvBlock.cpp" />
     <ClCompile Include="src\ConfigHandler.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="include\ProcessHandler.h" />
     <ClInclude Include="include\utils.h" />
     <ClInclude Include="include\MBConvBlock.h" />
+    <ClInclude Include="include\ProximalPolicyOptimization.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

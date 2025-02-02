@@ -22,7 +22,7 @@ Agent::Agent(uint32_t hiddenSize)
     register_module("m_fcActions", m_fcActions);
 }
 
-std::tuple<torch::Tensor, torch::Tensor> Agent::forward(torch::Tensor x) 
+torch::Tensor Agent::forward(torch::Tensor x) 
 {
     x = m_stemConv(x);
     x = m_stemBn(x);
@@ -39,5 +39,5 @@ std::tuple<torch::Tensor, torch::Tensor> Agent::forward(torch::Tensor x)
     const torch::Tensor coordinates = torch::sigmoid(m_fcCoordinates(x));
     const torch::Tensor actions = torch::softmax(m_fcActions(x), -1);
 
-    return { coordinates, actions };
+    return torch::cat({ coordinates, actions }, -1);
 }

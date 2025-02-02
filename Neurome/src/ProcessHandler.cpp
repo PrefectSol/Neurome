@@ -188,6 +188,38 @@ bool ProcessHandler::getCaptureWindow(cv::Mat *capture, int32_t width, int32_t h
 #endif // FRAME_CHECKER
 }
 
+bool ProcessHandler::getCaptureWindow(torch::Tensor *capture, int32_t width, int32_t height) const
+{
+    if (!m_window || !capture || width <= 0 || height <= 0)
+    {
+        return false;
+    }
+
+    if (!BitBlt(m_hdcMemory, 0, 0, m_sourceWidth, m_sourceHeight, m_hdcWindow, 0, 0, SRCCOPY))
+    {
+        return false;
+    }
+
+    const BITMAPINFOHEADER bi{ sizeof(BITMAPINFOHEADER),
+                                m_sourceWidth, -m_sourceHeight,
+                                1, 32, BI_RGB,
+                                0, 0, 0, 0, 0 };
+
+    std::vector<uint8_t> buffer(m_sourceWidth * m_sourceHeight * 4);
+    if (!GetDIBits(m_hdcMemory, m_hBitmap, 0, m_sourceHeight, buffer.data(), (BITMAPINFO *)&bi, DIB_RGB_COLORS))
+    {
+        return false;
+    }
+
+    const torch::Tensor original = torch::from_blob(buffer.data(), { m_sourceHeight, m_sourceWidth, 4 }, torch::kUInt8);
+    const torch::Tensor resized = torch::upsample_nearest2d(original.permute({ 2, 0, 1 }).unsqueeze(0), { height, width });
+    const torch::Tensor rgb = resized.index({ torch::indexing::Slice(), torch::indexing::Slice(0, 3) }).flip(1);
+
+    *capture = rgb.to(torch::kFloat32).div(255.0f);
+    
+    return true;
+}
+
 DWORD ProcessHandler::getProcessIdByPartialName(const std::wstring &partialName) const
 {
     DWORD processId = 0;

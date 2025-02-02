@@ -14,6 +14,8 @@ std::string boolToString(bool value);
 
 bool isPositiveInteger(const std::string &str);
 
+bool isFloat(const std::string &str);
+
 bool verifyKey(const std::string &str);
 
 std::string makeLine(uint32_t width, char symbol);

@@ -4,12 +4,12 @@ std::atomic<bool> Neurome::m_running(true);
 
 Neurome::Neurome()
 	: m_code(ResultCode::Unknown),
-	m_settings("osu!", true, 3000, "F6", 64, 64),
+	m_settings("osu!", true, 3000, "F6", "models/agent", 64, 64,
+		       512, 3, 32, 3e-4f, 3e-4f, 0.99f, 0.2f),
 	m_process(), 
 	m_memoryReader()
 {
 	setlocale(LC_ALL, "");
-	system("cls");
 	signal(SIGINT, sigintHandle);
 
 	std::cout << "Press CTRL+C to exit" << std::endl;
@@ -22,6 +22,24 @@ Neurome::Neurome()
 		std::cerr << "ERR: Couldn't set the pause hotkey: " << m_settings.pauseHotKey << std::endl;
 		m_code = ResultCode::KeyError;
 		
+		return;
+	}
+
+	LoadLibraryA("torch_cuda.dll");
+	if (!torch::cuda::is_available())
+	{
+		std::cerr << "ERR: CUDA is unavailable - Couldn't load `torch_cuda.dll`. CPU is not supported" << std::endl;
+		m_code = ResultCode::DeviceError;
+
+		return;
+	}
+
+	if (!m_ppo.init(m_settings.modelPath, m_settings.hiddenSize, m_settings.gamma, m_settings.epsilon,
+		m_settings.epochs, m_settings.bufferSize, m_settings.actorLr, m_settings.criticLr))
+	{
+		std::cerr << "ERR: Couldn't initialize the model correctly" << std::endl;
+		m_code = ResultCode::AgentInitializeError;
+
 		return;
 	}
 
@@ -98,11 +116,46 @@ void Neurome::start()
 
 					return;
 				}
+
 				std::cout << "frame preprocessing time: " << double(clock() - start) << "ms" << std::endl;
 
-				cv::imshow("Window Capture", frame);
-				cv::waitKey(1);
+				
 
+				//	while (true) {
+				//		clock_t start = clock();
+
+				//		cv::Mat frame;
+				//		if (!env.getFrame(&frame)) {
+				//			std::cerr << "Failed to capture frame" << std::endl;
+				//			break;
+				//		}
+
+				//		auto state = torch::from_blob(frame.data, { 1, 3, 64, 64 },
+				//			torch::kFloat32).to(torch::kCUDA);
+
+				//		auto action_probs = trainer.get_action(state);
+
+				//		float reward = env.executeAction(action_probs);
+				//		bool done = env.isDone();
+
+				//		cv::Mat next_frame;
+				//		env.getFrame(&next_frame);
+				//		auto next_state = torch::from_blob(next_frame.data, { 1, 3, 64, 64 },
+				//			torch::kFloat32).to(torch::kCUDA);
+
+				//		trainer.store_experience(state, action_probs, reward, next_state,
+				//			done ? 1.0f : 0.0f, action_probs);
+
+				//		if (done) {
+				//			env.reset();
+				//		}
+
+				//		double iteration_time = double(clock() - start) / CLOCKS_PER_SEC * 1000.0;
+				//		std::cout << "Iteration time: " << iteration_time << "ms" << std::endl;
+				//	}
+
+				//	return 0;
+				//}
 
 				//const std::string header = "Session #" + std::to_string(sessionCount);
 				//const uint32_t padding = (lineWidth - header.length()) / 2;
@@ -228,11 +281,15 @@ void Neurome::toWindowedMode() const
 }
 
 Neurome::Settings_t::Settings(std::string clientName, bool isAwaitProcess,
-							  uint32_t awaitProcessDelay, std::string pauseHotKey,
-							  uint32_t inputWidth, uint32_t inputHeight)
+							  uint32_t awaitProcessDelay, std::string pauseHotKey, std::string modelPath,
+							  uint32_t inputWidth, uint32_t inputHeight,
+						 	  uint32_t hiddenSize, uint32_t epochs, uint32_t bufferSize,
+					 	      float actorLr, float criticLr, float gamma, float epsilon)
 	: clientName(clientName), isAwaitProcess(isAwaitProcess),
-	awaitProcessDelay(awaitProcessDelay), pauseHotKey(pauseHotKey),
-	inputWidth(inputWidth), inputHeight(inputHeight) {}
+	awaitProcessDelay(awaitProcessDelay), pauseHotKey(pauseHotKey), modelPath(modelPath),
+	inputWidth(inputWidth), inputHeight(inputHeight),
+	hiddenSize(hiddenSize), epochs(epochs), bufferSize(bufferSize),
+    actorLr(actorLr), criticLr(criticLr), gamma(gamma), epsilon(epsilon) {}
 
 void Neurome::Settings_t::init(std::string settingsPath)
 {
@@ -261,65 +318,20 @@ Neurome::ResultCode Neurome::Settings_t::merge(ConfigHandler *configHandler)
 		return ResultCode::NullObject;
 	}
 
-	const std::string clientName = (*configHandler)["clientName"];
-	if (!clientName.empty())
-	{
-		this->clientName = clientName;
-	}
-	else
-	{
-		(*configHandler)["clientName"] = this->clientName;
-	}
-
-	const std::string isAwaitProcessStr = toLower((*configHandler)["isAwaitProcess"]);
-	if (!isAwaitProcessStr.empty())
-	{
-		this->isAwaitProcess = isAwaitProcessStr == "true";
-	}
-	else
-	{
-		(*configHandler)["isAwaitProcess"] = boolToString(this->isAwaitProcess);
-	}
-
-	const std::string awaitProcessDelayStr = (*configHandler)["awaitProcessDelay"];
-	if (isPositiveInteger(awaitProcessDelayStr))
-	{
-		awaitProcessDelay = std::stoi(awaitProcessDelayStr);
-	}
-	else
-	{
-		(*configHandler)["awaitProcessDelay"] = std::to_string(awaitProcessDelay);
-	}
-
-	const std::string pauseHotKey = (*configHandler)["pauseHotKey"];
-	if (verifyKey(pauseHotKey))
-	{
-		this->pauseHotKey = pauseHotKey;
-	}
-	else
-	{
-		(*configHandler)["pauseHotKey"] = this->pauseHotKey;
-	}
-
-	const std::string inputWidthStr = (*configHandler)["inputWidth"];
-	if (isPositiveInteger(inputWidthStr))
-	{
-		inputWidth = std::stoi(inputWidthStr);
-	}
-	else
-	{
-		(*configHandler)["inputWidth"] = std::to_string(inputWidth);
-	}
-
-	const std::string inputHeightStr = (*configHandler)["inputHeight"];
-	if (isPositiveInteger(inputHeightStr))
-	{
-		inputHeight = std::stoi(inputHeightStr);
-	}
-	else
-	{
-		(*configHandler)["inputHeight"] = std::to_string(inputHeight);
-	}
+	parseStr(configHandler, &this->clientName, "clientName");
+	parseBool(configHandler, &this->isAwaitProcess, "isAwaitProcess");
+	parseUInt(configHandler, &this->awaitProcessDelay, "awaitProcessDelay");
+	parseKey(configHandler, &this->pauseHotKey, "pauseHotKey");
+	parseStr(configHandler, &this->modelPath, "modelPath");
+	parseUInt(configHandler, &this->inputWidth, "inputWidth");
+	parseUInt(configHandler, &this->inputHeight, "inputHeight");
+	parseUInt(configHandler, &this->hiddenSize, "hiddenSize");
+	parseUInt(configHandler, &this->epochs, "epochs");
+	parseUInt(configHandler, &this->bufferSize, "bufferSize");
+	parseFloat(configHandler, &this->actorLr, "actorLr");
+	parseFloat(configHandler, &this->criticLr, "criticLr");
+	parseFloat(configHandler, &this->gamma, "gamma");
+	parseFloat(configHandler, &this->epsilon, "epsilon");
 
 	return ResultCode::Success;
 }
@@ -331,9 +343,78 @@ void Neurome::Settings_t::print() const
 	std::cout << " - isAwaitProcess: " << isAwaitProcess << std::endl;
 	std::cout << " - awaitProcessDelay: " << awaitProcessDelay << std::endl;
 	std::cout << " - pauseHotKey: " << pauseHotKey << std::endl;
+	std::cout << " - modelPath: " << modelPath << std::endl;
 	std::cout << " - inputWidth: " << inputWidth << std::endl;
 	std::cout << " - inputHeight: " << inputHeight << std::endl;
+	std::cout << " - hiddenSize: " << hiddenSize << std::endl;
+	std::cout << " - epochs: " << epochs << std::endl;
+	std::cout << " - actorLr: " << actorLr << std::endl;
+	std::cout << " - criticLr: " << criticLr << std::endl;
+	std::cout << " - gamma: " << gamma << std::endl;
+	std::cout << " - epsilon: " << epsilon << std::endl;
+}
+
+void Neurome::Settings_t::parseStr(ConfigHandler *configHandler, std::string *value, std::string field)
+{
+	const std::string str = (*configHandler)[field];
+	if (!str.empty())
+	{
+		*value = str;
+		return;
+	}
+
+	(*configHandler)[field] = *value;
+}
+
+void Neurome::Settings_t::parseUInt(ConfigHandler *configHandler, uint32_t *value, std::string field)
+{
+	const std::string str = (*configHandler)[field];
+	if (isPositiveInteger(str))
+	{
+		*value = std::stoi(str);
+		return;
+	}
+
+	(*configHandler)[field] = std::to_string(*value);
+}
+
+void Neurome::Settings_t::parseFloat(ConfigHandler *configHandler, float *value, std::string field)
+{
+	const std::string str = (*configHandler)[field];
+	if (isFloat(str))
+	{
+		*value = std::stof(str);
+		return;
+	}
+
+	(*configHandler)[field] = std::to_string(*value);
+}
+
+void Neurome::Settings_t::parseBool(ConfigHandler *configHandler, bool *value, std::string field)
+{
+	const std::string str = toLower((*configHandler)[field]);
+	if (!str.empty())
+	{
+		*value = str == "true";
+		return;
+	}
+
+	(*configHandler)[field] = boolToString(*value);
+}
+
+void Neurome::Settings_t::parseKey(ConfigHandler *configHandler, std::string *value, std::string field)
+{
+	const std::string key = (*configHandler)[field];
+	if (verifyKey(key))
+	{
+		*value = key;
+		return;
+	}
+
+	(*configHandler)[field] = *value;
 }
 
 Neurome::UserConfig_t::UserConfig()
 	: keyLeft(""), isFullscreen(false) {}
+
+

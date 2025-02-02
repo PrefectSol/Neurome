@@ -28,6 +28,21 @@ bool isPositiveInteger(const std::string &str)
 	return pos == str.length() && num > 0;
 }
 
+bool isFloat(const std::string &str)
+{
+	std::size_t pos;
+	try
+	{
+		std::stof(str, &pos);
+	}
+	catch (...)
+	{
+		return false;
+	}
+
+	return pos == str.length();
+}
+
 bool verifyKey(const std::string &str) 
 {
 	const std::unordered_map<std::string, int> validKeys = 

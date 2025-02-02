@@ -10,6 +10,7 @@
 #include <tlhelp32.h>
 
 #include <opencv2/opencv.hpp>
+#include <torch/torch.h>
 
 #define FRAME_CHECKER
 #define INTERPOLATION cv::INTER_NEAREST
@@ -36,6 +37,8 @@ public:
 	std::string getProcessPath() const;
 
 	bool getCaptureWindow(cv::Mat *capture, int32_t width, int32_t height) const;
+
+	bool getCaptureWindow(torch::Tensor *capture, int32_t width, int32_t height) const;
 
 private:
 	HWND m_window;
