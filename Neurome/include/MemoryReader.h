@@ -7,7 +7,7 @@
 #include <array>
 #include <algorithm>
 
-#include "osu_memory/osu_memory.h"
+#include <osu_memory/osu_memory.h>
 
 class MemoryReader
 {
