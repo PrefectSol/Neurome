@@ -14,6 +14,8 @@
 #include <opencv2/opencv.hpp>
 #include <torch/torch.h>
 
+#pragma comment(lib, "comsuppw.lib")
+
 #define FRAME_CHECKER
 #define INTERPOLATION cv::INTER_NEAREST
 
