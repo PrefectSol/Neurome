@@ -25,10 +25,7 @@ bool ProcessHandler::getProcess(std::string clientName)
         return false;
     }
 
-    const uint32_t timeout = 5000;
-    const uint32_t delay = 500;
-
-    m_window = getWindowByProcessIdTimed(m_processId, timeout, delay);
+    m_window = getWindowByProcessId(m_processId);
     if (!m_window)
     {
         return false;
@@ -59,10 +56,7 @@ bool ProcessHandler::getProcess(std::string clientName, bool *loop, uint32_t loo
         Sleep(loopDelay);
     }
 
-    const uint32_t timeout = 5000;
-    const uint32_t delay = 500;
-
-    m_window = getWindowByProcessIdTimed(m_processId, timeout, delay);
+    m_window = getWindowByProcessId(m_processId);
     if (!m_window)
     {
         return false;
@@ -278,53 +272,6 @@ HWND ProcessHandler::getWindowByProcessId(DWORD processId) const
         }, (LPARAM)&data);
 
     return data.window;
-}
-
-HWND ProcessHandler::getWindowByProcessIdTimed(DWORD processId, uint32_t timeout, uint32_t delay) const
-{
-    struct EnumData
-    {
-        DWORD processId;
-        HWND window;
-    }
-    data{ processId, NULL };
-
-    const auto startTime = std::chrono::steady_clock::now();
-    const auto timeoutMs = std::chrono::milliseconds(timeout);
-
-    while (true)
-    {
-        EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL
-            {
-                struct EnumData &data = *(EnumData *)lParam;
-
-                DWORD windowProcessId;
-                GetWindowThreadProcessId(hwnd, &windowProcessId);
-
-                if (windowProcessId == data.processId)
-                {
-                    data.window = hwnd;
-                    return FALSE;
-                }
-
-                return TRUE;
-            }, (LPARAM)&data);
-
-        if (!data.window)
-        {
-            return data.window;
-        }
-
-        const auto elapsed = std::chrono::steady_clock::now() - startTime;
-        if (elapsed >= timeoutMs)
-        {
-            break;
-        }
-
-        Sleep(delay);
-    }
-
-    return NULL;
 }
 
 bool ProcessHandler::initializeCapture() 
