@@ -48,155 +48,96 @@ bool ProximalPolicyOptimization::init(std::string modelPath, uint32_t hiddenSize
     return true;
 }
 
-//class PPOTrainer {
-//private:
-//    std::shared_ptr<Agent> actor;
-//    std::shared_ptr<Agent> critic;
-//    std::unique_ptr<torch::optim::Adam> actor_optimizer;
-//    std::unique_ptr<torch::optim::Adam> critic_optimizer;
-//
-//    const float gamma = 0.99f;
-//    const float epsilon = 0.2f;
-//    const int epochs = 3;
-//    const int buffer_size = 32; 
-//
-//    struct Experience {
-//        torch::Tensor state;
-//        torch::Tensor action;
-//        float reward;
-//        torch::Tensor next_state;
-//        float done;
-//        torch::Tensor old_log_prob;
-//    };
-//
-//    std::vector<Experience> buffer;
-//    std::string model_path;
+torch::Tensor ProximalPolicyOptimization::inference(torch::Tensor state)
+{
+    m_actor->eval();
+    torch::NoGradGuard no_grad;
 
-//public:
-//    PPOTrainer() {}
-//
-//    bool init(uint32_t hidden_size, const std::string &path = "") {
-//        model_path = path;
-//
-//        try {
-//            if (!path.empty() && std::filesystem::exists(path + "_actor.pt") &&
-//                std::filesystem::exists(path + "_critic.pt")) {
-//
-//                actor = std::make_shared<Agent>();
-//                critic = std::make_shared<Agent>();
-//
-//                try {
-//                    actor = torch::jit::load(path + "_actor.pt").get_module<Agent>();
-//                    critic = torch::jit::load(path + "_critic.pt").get_module<Agent>();
-//                }
-//                catch (const c10::Error &e) {
-//                    std::cerr << "Error loading models: " << e.msg() << std::endl;
-//                    return false;
-//                }
-//            }
-//            else {
-//                actor = std::make_shared<Agent>(hidden_size);
-//                critic = std::make_shared<Agent>(hidden_size);
-//
-//                if (!path.empty()) {
-//                    torch::jit::save(*actor, path + "_actor.pt");
-//                    torch::jit::save(*critic, path + "_critic.pt");
-//                }
-//            }
-//
-//            actor->to(torch::kCUDA);
-//            critic->to(torch::kCUDA);
-//
-//            actor_optimizer = std::make_unique<torch::optim::Adam>(
-//                actor->parameters(), 3e-4);
-//            critic_optimizer = std::make_unique<torch::optim::Adam>(
-//                critic->parameters(), 3e-4);
-//
-//            buffer.reserve(buffer_size);
-//            return true;
-//        }
-//        catch (const std::exception &e) {
-//            std::cerr << "Initialization error: " << e.what() << std::endl;
-//            return false;
-//        }
-//    }
-//
-//    torch::Tensor get_action(torch::Tensor state) {
-//        actor->eval();
-//        torch::NoGradGuard no_grad;
-//        auto action_probs = actor->forward(state);
-//        return action_probs;
-//    }
-//
-//    void store_experience(torch::Tensor state, torch::Tensor action, float reward,
-//        torch::Tensor next_state, float done, torch::Tensor old_log_prob) {
-//        buffer.push_back({ state, action, reward, next_state, done, old_log_prob });
-//
-//        if (buffer.size() >= buffer_size) {
-//            train_step();
-//            buffer.clear();
-//        }
-//    }
-//
-//    void train_step() {
-//        if (buffer.empty()) return;
-//
-//        actor->train();
-//        critic->train();
-//
-//        std::vector<torch::Tensor> states, actions, next_states, old_log_probs;
-//        std::vector<float> rewards, dones;
-//
-//        for (const auto &exp : buffer) {
-//            states.push_back(exp.state);
-//            actions.push_back(exp.action);
-//            rewards.push_back(exp.reward);
-//            next_states.push_back(exp.next_state);
-//            dones.push_back(exp.done);
-//            old_log_probs.push_back(exp.old_log_prob);
-//        }
-//
-//        auto states_batch = torch::stack(states);
-//        auto actions_batch = torch::stack(actions);
-//        auto rewards_tensor = torch::tensor(rewards).to(torch::kCUDA);
-//        auto next_states_batch = torch::stack(next_states);
-//        auto dones_tensor = torch::tensor(dones).to(torch::kCUDA);
-//        auto old_log_probs_batch = torch::stack(old_log_probs);
-//
-//        for (int epoch = 0; epoch < epochs; epoch++) {
-//            auto current_values = critic->forward(states_batch);
-//            auto next_values = critic->forward(next_states_batch);
-//            auto advantages = compute_advantages(rewards_tensor, current_values,
-//                next_values, dones_tensor);
-//
-//            auto new_action_probs = actor->forward(states_batch);
-//            auto ratio = torch::exp(new_action_probs - old_log_probs_batch);
-//            auto surr1 = ratio * advantages;
-//            auto surr2 = torch::clamp(ratio, 1.0f - epsilon, 1.0f + epsilon) * advantages;
-//            auto actor_loss = -torch::min(surr1, surr2).mean();
-//
-//            actor_optimizer->zero_grad();
-//            actor_loss.backward();
-//            actor_optimizer->step();
-//
-//            auto value_pred = critic->forward(states_batch);
-//            auto returns = rewards_tensor + gamma * next_values * (1.0f - dones_tensor);
-//            auto critic_loss = torch::mse_loss(value_pred, returns.detach());
-//
-//            critic_optimizer->zero_grad();
-//            critic_loss.backward();
-//            critic_optimizer->step();
-//        }
-//
-//        if (!model_path.empty()) {
-//            torch::jit::save(*actor, model_path + "_actor.pt");
-//            torch::jit::save(*critic, model_path + "_critic.pt");
-//        }
-//    }
-//
-//private:
-//    torch::Tensor compute_advantages(torch::Tensor rewards, torch::Tensor values,
-//        torch::Tensor next_values, torch::Tensor dones) {
-//        return rewards + gamma * next_values * (1.0f - dones) - values;
-//    }
-//};
+    return m_actor->forward(state);
+}
+
+void ProximalPolicyOptimization::storeExperience(torch::Tensor state, torch::Tensor action, float reward,
+                                                 torch::Tensor nextState, float done, torch::Tensor oldLogProb)
+{
+    m_buffer.push_back({ state, action, nextState, oldLogProb, reward, done });
+
+    if (m_buffer.size() >= m_bufferSize) 
+    {
+        train();
+        m_buffer.clear();
+    }
+}
+
+void ProximalPolicyOptimization::train()
+{
+    if (m_buffer.empty())
+    {
+        return;
+    }
+
+    m_actor->train();
+    m_critic->train();
+
+    std::vector<torch::Tensor> states, actions, next_states, oldLogProbs;
+    std::vector<float> rewards, dones;
+
+    for (const auto &exp : m_buffer) 
+    {
+        states.push_back(exp.state);
+        actions.push_back(exp.action);
+        rewards.push_back(exp.reward);
+        next_states.push_back(exp.nextState);
+        dones.push_back(exp.done);
+        oldLogProbs.push_back(exp.oldLogProb);
+    }
+
+    const torch::Tensor statesBatch = torch::stack(states);
+    const torch::Tensor actionsBatch = torch::stack(actions);
+    const torch::Tensor rewardsTensor = torch::tensor(rewards).to(torch::kCUDA);
+    const torch::Tensor nextStatesBatch = torch::stack(next_states);
+    const torch::Tensor donesTensor = torch::tensor(dones).to(torch::kCUDA);
+    const torch::Tensor oldLogProbsBatch = torch::stack(oldLogProbs);
+
+    for (uint32_t epoch = 0; epoch < m_epochs; ++epoch) 
+    {
+        const torch::Tensor currentValues = m_critic->forward(statesBatch);
+        const torch::Tensor nextValues = m_critic->forward(nextStatesBatch);
+        const torch::Tensor advantages = rewardsTensor + m_gamma * nextValues * (1.0f - donesTensor) - currentValues;
+
+        const torch::Tensor newActionProbs = m_actor->forward(statesBatch);
+        const torch::Tensor ratio = torch::exp(newActionProbs - oldLogProbsBatch);
+        const torch::Tensor surr1 = ratio * advantages;
+        const torch::Tensor surr2 = torch::clamp(ratio, 1.0f - m_epsilon, 1.0f + m_epsilon) * advantages;
+        const torch::Tensor actorLoss = -torch::min(surr1, surr2).mean();
+
+        m_actorOptimizer->zero_grad();
+        actorLoss.backward();
+        m_actorOptimizer->step();
+
+        const torch::Tensor valuePred = m_critic->forward(statesBatch);
+        const torch::Tensor returns = rewardsTensor + m_gamma * nextValues * (1.0f - donesTensor);
+
+        const torch::Tensor coordinatesPred = valuePred.slice(-1, 0, 2);
+        const torch::Tensor actionsPred = valuePred.slice(-1, 2);
+        const torch::Tensor coordinatesTarget = returns.slice(-1, 0, 2);
+        const torch::Tensor actionsTarget = returns.slice(-1, 2);
+
+        const torch::Tensor mse_loss = torch::mse_loss(coordinatesPred, coordinatesTarget.detach());
+        const torch::Tensor ce_loss = torch::cross_entropy_loss(actionsPred, actionsTarget.detach());
+        const torch::Tensor criticLoss = mse_loss + ce_loss;
+
+        m_criticOptimizer->zero_grad();
+        criticLoss.backward();
+        m_criticOptimizer->step();
+    }
+
+    if (!m_modelPath.empty())
+    {
+        try
+        {
+            torch::save(m_actor, m_modelPath + "_actor.pt");
+            torch::save(m_critic, m_modelPath + "_critic.pt");
+        }
+        catch (...) {}
+    }
+}

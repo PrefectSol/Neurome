@@ -250,7 +250,7 @@ bool ProcessHandler::getCaptureWindow(torch::Tensor *capture, int32_t width, int
         return false;
     }
 
-    const torch::Tensor original = torch::from_blob(buffer.data(), { m_sourceHeight, m_sourceWidth, 4 }, torch::kUInt8);
+    const torch::Tensor original = torch::from_blob(buffer.data(), { m_sourceHeight, m_sourceWidth, 4 }, torch::kUInt8).to(torch::kCUDA);;
     const torch::Tensor resized = torch::upsample_nearest2d(original.permute({ 2, 0, 1 }).unsqueeze(0), { height, width });
     const torch::Tensor rgb = resized.index({ torch::indexing::Slice(), torch::indexing::Slice(0, 3) }).flip(1);
 

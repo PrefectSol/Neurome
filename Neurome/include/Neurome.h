@@ -108,6 +108,8 @@ private:
 
 	void toWindowedMode() const;
 
+	float execute(const torch::Tensor &actions) const;
+
 	ResultCode m_code;
 
 	Settings_t m_settings;

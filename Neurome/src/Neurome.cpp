@@ -14,6 +14,9 @@ Neurome::Neurome()
 
 	std::cout << "Press CTRL+C to exit" << std::endl;
 
+	// Add check admin 
+	// if don`t have - print warn
+
 	m_settings.init("data/settings.cfg");
 	m_settings.print();
 
@@ -100,15 +103,15 @@ void Neurome::start()
 		
 		while (m_running && m_memoryReader.isAccessible())
 		{
-	/*		std::cout << "model status:\t" << (m_controller.isPause() ? "pause" : "active") << std::endl;
-			std::cout << "osu! status:\t" << (m_memoryReader.isPlay() ? "play" : "menu") << std::endl;*/
-
 			uint32_t sessionCount = 1;
+
+			const std::string header = "Session #" + std::to_string(sessionCount);
+			const uint32_t padding = (lineWidth - header.length()) / 2;
+
 			while (m_running && m_memoryReader.isPlay() && !m_controller.isPause())
 			{
 				clock_t start = clock();
-				
-				cv::Mat frame;
+				torch::Tensor frame;
 				if (!m_process.getCaptureWindow(&frame, m_settings.inputWidth, m_settings.inputHeight))
 				{
 					std::cerr << "ERR: The captured window could not be read" << std::endl;
@@ -116,59 +119,51 @@ void Neurome::start()
 
 					return;
 				}
+				const double preprocessingTime = double(clock() - start);
 
-				std::cout << "frame preprocessing time: " << double(clock() - start) << "ms" << std::endl;
+				start = clock();
+				const torch::Tensor prob = m_ppo.inference(frame);
+				const double inferenceTime = double(clock() - start);
 
+				const float reward = execute(prob);
+				const bool done = !m_running || !m_memoryReader.isPlay() || m_controller.isPause();
 				
+				start = clock();
+				torch::Tensor nextFrame;
+				if (!m_process.getCaptureWindow(&nextFrame, m_settings.inputWidth, m_settings.inputHeight))
+				{
+					std::cerr << "ERR: The captured window could not be read" << std::endl;
+					m_code = ResultCode::CaptureWindowError;
 
-				//	while (true) {
-				//		clock_t start = clock();
+					return;
+				}
+				const double nextPreprocessingTime = double(clock() - start);
 
-				//		cv::Mat frame;
-				//		if (!env.getFrame(&frame)) {
-				//			std::cerr << "Failed to capture frame" << std::endl;
-				//			break;
-				//		}
+				start = clock();
+				m_ppo.storeExperience(frame, prob, reward, nextFrame, done ? 1.0f : 0.0f, prob);
+				const double expTime = double(clock() - start);
 
-				//		auto state = torch::from_blob(frame.data, { 1, 3, 64, 64 },
-				//			torch::kFloat32).to(torch::kCUDA);
-
-				//		auto action_probs = trainer.get_action(state);
-
-				//		float reward = env.executeAction(action_probs);
-				//		bool done = env.isDone();
-
-				//		cv::Mat next_frame;
-				//		env.getFrame(&next_frame);
-				//		auto next_state = torch::from_blob(next_frame.data, { 1, 3, 64, 64 },
-				//			torch::kFloat32).to(torch::kCUDA);
-
-				//		trainer.store_experience(state, action_probs, reward, next_state,
-				//			done ? 1.0f : 0.0f, action_probs);
-
-				//		if (done) {
-				//			env.reset();
-				//		}
-
-				//		double iteration_time = double(clock() - start) / CLOCKS_PER_SEC * 1000.0;
-				//		std::cout << "Iteration time: " << iteration_time << "ms" << std::endl;
-				//	}
-
-				//	return 0;
-				//}
-
-				//const std::string header = "Session #" + std::to_string(sessionCount);
-				//const uint32_t padding = (lineWidth - header.length()) / 2;
-
-				//std::cout << makeLine(padding, lineSymbol) << header << makeLine(padding, lineSymbol) << std::endl;
-				//std::cout << "perfect:" << std::setw(8) << m_memoryReader.getHitPerfect() << std::endl;
-				//std::cout << "300:" << std::setw(8) << m_memoryReader.getHit300() << std::endl;
-				//std::cout << "200:" << std::setw(8) << m_memoryReader.getHit200() << std::endl;
-				//std::cout << "100:" << std::setw(8) << m_memoryReader.getHit100() << std::endl;
-				//std::cout << "50:" << std::setw(8) << m_memoryReader.getHit50() << std::endl;
-				//std::cout << "miss:" << std::setw(8) << m_memoryReader.getHitMiss() << std::endl;
-				//std::cout << makeLine(lineWidth, lineSymbol) << std::endl;
+				std::cout << makeLine(padding, lineSymbol) << header << makeLine(padding, lineSymbol) << std::endl;
+				std::cout << "frame preprocessing time: " << preprocessingTime << "ms" << std::endl;
+				std::cout << "model inference time: " << inferenceTime << "ms" << std::endl;
+				std::cout << "next frame preprocessing time: " << nextPreprocessingTime << "ms" << std::endl;
+				std::cout << "store experience time: " << expTime << "ms" << std::endl;
+				std::cout << "total time: " << preprocessingTime + inferenceTime + nextPreprocessingTime + expTime << "ms" << std::endl;
+				std::cout << std::endl;
+				std::cout << "perfect:" << std::setw(8) << m_memoryReader.getHitPerfect() << std::endl;
+				std::cout << "300:" << std::setw(8) << m_memoryReader.getHit300() << std::endl;
+				std::cout << "200:" << std::setw(8) << m_memoryReader.getHit200() << std::endl;
+				std::cout << "100:" << std::setw(8) << m_memoryReader.getHit100() << std::endl;
+				std::cout << "50:" << std::setw(8) << m_memoryReader.getHit50() << std::endl;
+				std::cout << "miss:" << std::setw(8) << m_memoryReader.getHitMiss() << std::endl;
+				std::cout << makeLine(lineWidth, lineSymbol) << std::endl;
+			
+				std::cout << "model status:\t" << (m_controller.isPause() ? "pause" : "active") << std::endl;
+				std::cout << "osu! status:\t" << (m_memoryReader.isPlay() ? "play" : "menu") << std::endl;
 			}
+
+			std::cout << "model status:\t" << (m_controller.isPause() ? "pause" : "active") << std::endl;
+			std::cout << "osu! status:\t" << (m_memoryReader.isPlay() ? "play" : "menu") << std::endl;
 
 			++sessionCount;
 		}
@@ -278,6 +273,11 @@ void Neurome::toWindowedMode() const
 	osuConfig["Fullscreen"] = "0";
 
 	osuConfig.save();
+}
+
+float Neurome::execute(const torch::Tensor &actions) const
+{
+	return 0;
 }
 
 Neurome::Settings_t::Settings(std::string clientName, bool isAwaitProcess,

@@ -18,13 +18,18 @@ public:
 	bool init(std::string modelPath, uint32_t hiddenSize, float gamma, float epsilon,
 		      uint32_t epochs, uint32_t bufferSize, float actorLr, float criticLr);
 
+	torch::Tensor inference(torch::Tensor state);
+
+	void storeExperience(torch::Tensor state, torch::Tensor action, float reward,
+						 torch::Tensor nextState, float done, torch::Tensor oldLogProb);
+
 private:
 	typedef struct Experience
 	{
 		torch::Tensor state;
 		torch::Tensor action;
 		torch::Tensor nextState;
-		torch::Tensor oldProb;
+		torch::Tensor oldLogProb;
 		float reward;
 		float done;
 	} Experience_t;
@@ -44,6 +49,8 @@ private:
 
 	std::unique_ptr<torch::optim::Adam> m_actorOptimizer;
 	std::unique_ptr<torch::optim::Adam> m_criticOptimizer;
+
+	void train();
 };
 
 #endif // !__PROXIMAL_POLICY_OPTIMIZATION_H
