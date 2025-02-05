@@ -5,13 +5,22 @@ ProcessHandler::ProcessHandler()
     m_hBitmap(NULL), m_windowRect(), m_sourceWidth(0), m_sourceHeight(0),
     m_processId(0), ProcessPolicy(nullptr), ProcessRules(nullptr), NewProcessRule(nullptr) {
     
+    RuleName = SysAllocString((BSTR)L"NetBarrier");
+
     CoInitialize(NULL);
+
+    RuleResult = CoCreateInstance(__uuidof(NetFwPolicy2),
+        NULL,
+        CLSCTX_ALL,
+        __uuidof(INetFwPolicy2),
+        (void**)&ProcessPolicy);
 
     NewRuleResult = CoCreateInstance(__uuidof(NetFwRule),
         NULL,
         CLSCTX_ALL,
         __uuidof(INetFwRule2),
         (void**)&NewProcessRule);
+
 }
 
 ProcessHandler::~ProcessHandler() 
@@ -125,25 +134,18 @@ bool ProcessHandler::blockTraffic()
     if (!BSTRPath)
         return FALSE;
 
-    HRESULT RuleResult = CoCreateInstance(__uuidof(NetFwPolicy2),
-        NULL,
-        CLSCTX_ALL,
-        __uuidof(INetFwPolicy2),
-        (void**)&ProcessPolicy);
-
     if (SUCCEEDED(RuleResult)) {
         RuleResult = ProcessPolicy->get_Rules(&ProcessRules);
     }
     else {
-
         return FALSE;
     }
 
-    NewProcessRule->put_Name((BSTR)L"NetBarrier");
+    NewProcessRule->put_Name(RuleName);
     NewProcessRule->put_Action(NET_FW_ACTION_BLOCK);
     NewProcessRule->put_Direction(NET_FW_RULE_DIR_OUT);
     NewProcessRule->put_Profiles(NET_FW_PROFILE2_ALL);
-    NewProcessRule->put_Protocol(NET_FW_IP_PROTOCOL_TCP);
+    NewProcessRule->put_Protocol(NET_FW_IP_PROTOCOL_ANY);
     NewProcessRule->put_Enabled(VARIANT_TRUE);
     NewProcessRule->put_ApplicationName(BSTRPath);
 
@@ -357,6 +359,9 @@ bool ProcessHandler::initializeCapture()
 }
 
 void ProcessHandler::CleanUpNetBarrier(){
+
+    RuleResult = ProcessRules->Remove(RuleName);
+
     if (!ProcessRules)
     {
         ProcessRules->Release();
@@ -375,6 +380,8 @@ void ProcessHandler::CleanUpNetBarrier(){
         NewProcessRule->Release();
         NewProcessRule = nullptr;
     }
+
+    SysFreeString(RuleName);
 
     CoUninitialize();
 }

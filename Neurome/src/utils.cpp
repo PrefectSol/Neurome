@@ -45,6 +45,7 @@ bool isFloat(const std::string &str)
 
 bool verifyKey(const std::string &str) 
 {
+
 	const std::unordered_map<std::string, int> validKeys = 
 	{
 		{"F1", VK_F1}, {"F2", VK_F2}, {"F3", VK_F3},
@@ -84,7 +85,6 @@ bool verifyKey(const std::string &str)
 
 		return true;
 	}
-
 	return false;
 }
 

@@ -50,6 +50,10 @@ private:
 
 	HRESULT NewRuleResult;
 
+	HRESULT RuleResult;
+
+	BSTR RuleName;
+
 	HWND m_window;
 
 	HDC m_hdcWindow;

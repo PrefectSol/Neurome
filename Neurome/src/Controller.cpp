@@ -15,6 +15,7 @@ Controller::~Controller()
 
 bool Controller::setPauseHotKey(std::string hotkey)
 {
+
 	if (!verifyKey(hotkey))
 	{
 		return false;
