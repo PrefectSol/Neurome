@@ -1,7 +1,7 @@
 #include "ProximalPolicyOptimization.h"
 
 ProximalPolicyOptimization::ProximalPolicyOptimization()
-    : m_modelPath(), m_epochs(0), m_buffer(), m_gamma(0.0f), m_epsilon(0.0f),
+    : m_modelPath(), m_epochs(0), m_buffer(), m_bufferSize(0), m_gamma(0.0f), m_epsilon(0.0f),
     m_actor(), m_critic(), m_actorOptimizer(), m_criticOptimizer() {}
 
 bool ProximalPolicyOptimization::init(std::string modelPath, uint32_t hiddenSize, float gamma, float epsilon,
