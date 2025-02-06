@@ -8,7 +8,8 @@
 #include <torch/torch.h>
 #include <torch/script.h>
 
-#include "Agent.h"
+#include "Actor.h"
+#include "Critic.h"
 
 class ProximalPolicyOptimization
 {
@@ -44,8 +45,8 @@ private:
 	float m_gamma;
 	float m_epsilon;
 
-	std::shared_ptr<Agent> m_actor;
-	std::shared_ptr<Agent> m_critic;
+	std::shared_ptr<Actor> m_actor;
+	std::shared_ptr<Critic> m_critic;
 
 	std::unique_ptr<torch::optim::Adam> m_actorOptimizer;
 	std::unique_ptr<torch::optim::Adam> m_criticOptimizer;

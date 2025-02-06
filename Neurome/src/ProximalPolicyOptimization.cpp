@@ -22,8 +22,8 @@ bool ProximalPolicyOptimization::init(std::string modelPath, uint32_t hiddenSize
 
     try
     {
-        m_actor = std::make_shared<Agent>(hiddenSize);
-        m_critic = std::make_shared<Agent>(hiddenSize);
+        m_actor = std::make_shared<Actor>(hiddenSize);
+        m_critic = std::make_shared<Critic>(hiddenSize);
 
         if (!modelPath.empty() && std::filesystem::exists(modelPath + "_actor.pt") &&
                                   std::filesystem::exists(modelPath + "_critic.pt")) 
@@ -83,12 +83,12 @@ void ProximalPolicyOptimization::train()
 
     for (const auto &exp : m_buffer) 
     {
-        states.push_back(exp.state);
+        states.push_back(exp.state.squeeze(0));
         actions.push_back(exp.action);
         rewards.push_back(exp.reward);
-        next_states.push_back(exp.nextState);
+        next_states.push_back(exp.nextState.squeeze(0));
         dones.push_back(exp.done);
-        oldLogProbs.push_back(exp.oldLogProb);
+        oldLogProbs.push_back(exp.oldLogProb.squeeze(0));
     }
 
     const torch::Tensor statesBatch = torch::stack(states);
@@ -100,9 +100,9 @@ void ProximalPolicyOptimization::train()
 
     for (uint32_t epoch = 0; epoch < m_epochs; ++epoch) 
     {
-        const torch::Tensor currentValues = m_critic->forward(statesBatch);
-        const torch::Tensor nextValues = m_critic->forward(nextStatesBatch);
-        const torch::Tensor advantages = rewardsTensor + m_gamma * nextValues * (1.0f - donesTensor) - currentValues;
+        const torch::Tensor currentValues = m_critic->forward(statesBatch).squeeze();
+        const torch::Tensor nextValues = m_critic->forward(nextStatesBatch).squeeze();
+        const torch::Tensor advantages = (rewardsTensor + m_gamma * nextValues * (1.0f - donesTensor) - currentValues).unsqueeze(1);
 
         const torch::Tensor newActionProbs = m_actor->forward(statesBatch);
         const torch::Tensor ratio = torch::exp(newActionProbs - oldLogProbsBatch);
@@ -114,7 +114,7 @@ void ProximalPolicyOptimization::train()
         actorLoss.backward();
         m_actorOptimizer->step();
 
-        const torch::Tensor valuePred = m_critic->forward(statesBatch);
+        const torch::Tensor valuePred = m_critic->forward(statesBatch).squeeze();
         const torch::Tensor returns = rewardsTensor + m_gamma * nextValues * (1.0f - donesTensor);
 
         const torch::Tensor coordinatesPred = valuePred.slice(-1, 0, 2);

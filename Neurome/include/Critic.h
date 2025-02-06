@@ -1,17 +1,17 @@
-#ifndef __AGENT_H
-#define __AGENT_H
+#ifndef __CRITIC_H
+#define __CRITIC_H
 
 #include <torch/torch.h>
 #include <torch/script.h>
 
 #include "MBConvBlock.h"
 
-class Agent : public torch::nn::Module
+class Critic : public torch::nn::Module
 {
 public:
-	explicit Agent(uint32_t hiddenSize);
+    explicit Critic(uint32_t hiddenSize);
 
-	torch::Tensor forward(torch::Tensor x);
+    torch::Tensor forward(torch::Tensor x);
 
 private:
     torch::nn::Conv2d m_stemConv;
@@ -25,8 +25,6 @@ private:
 
     torch::nn::GRU m_gru;
 
-    torch::nn::Linear m_fcCoordinates;
-    torch::nn::Linear m_fcActions;
+    torch::nn::Linear m_fc;
 };
-
-#endif // !__AGENT_H
+#endif // !__CRITIC_H

@@ -156,6 +156,9 @@ void Neurome::start()
 				std::cout << "100:" << std::setw(8) << m_memoryReader.getHit100() << std::endl;
 				std::cout << "50:" << std::setw(8) << m_memoryReader.getHit50() << std::endl;
 				std::cout << "miss:" << std::setw(8) << m_memoryReader.getHitMiss() << std::endl;
+				std::cout << std::endl;
+				std::cout << "reward: " << reward << std::endl;
+				std::cout << "is done: " << done << std::endl;
 				std::cout << makeLine(lineWidth, lineSymbol) << std::endl;
 			
 				std::cout << "model status:\t" << (m_controller.isPause() ? "pause" : "active") << std::endl;
