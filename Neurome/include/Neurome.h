@@ -63,12 +63,20 @@ private:
 		float criticLr;
 		float gamma;
 		float epsilon;
+		float rewardPerfect;
+		float reward300;
+		float reward200;
+		float reward100;
+		float reward50;
+		float rewardMiss;
 
 		explicit Settings(std::string clientName, bool isAwaitProcess,
 						  uint32_t awaitProcessDelay, std::string pauseHotKey, std::string modelPath,
 						  uint32_t inputWidth, uint32_t inputHeight,
 			              uint32_t hiddenSize, uint32_t epochs, uint32_t bufferSize,
-						  float actorLr, float criticLr, float gamma, float epsilon);
+						  float actorLr, float criticLr, float gamma, float epsilon,
+						  float rewardPerfect, float reward300, float reward200,
+						  float reward100, float reward50, float rewardMiss);
 
 		void init(std::string settingsPath);
 
@@ -108,7 +116,7 @@ private:
 
 	void toWindowedMode() const;
 
-	float execute(const torch::Tensor &actions) const;
+	float execute(const torch::Tensor &actions, uint32_t width, uint32_t height);
 
 	ResultCode m_code;
 
@@ -121,5 +129,9 @@ private:
 	Controller m_controller;
 
 	ProximalPolicyOptimization m_ppo;
+
+	const float m_confidenceThreshold;
+
+	bool m_isHold;
 };
 #endif // !__NEUROME_H

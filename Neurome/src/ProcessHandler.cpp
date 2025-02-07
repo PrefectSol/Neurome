@@ -261,6 +261,45 @@ bool ProcessHandler::getCaptureWindow(torch::Tensor *capture, int32_t width, int
     return true;
 }
 
+bool ProcessHandler::getWindowSizes(uint32_t *width, uint32_t *height) const
+{
+    if (!m_window || !width || !height)
+    {
+        return false;
+    }
+
+    RECT rect;
+    if (GetClientRect(m_window, &rect))
+    {
+        *width = rect.right - rect.left;
+        *height = rect.bottom - rect.top;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool ProcessHandler::getWindowOffset(uint32_t *top, uint32_t *left) const
+{
+    if (!m_window || !top || !left)
+    {
+        return false;
+    }
+
+    RECT rect;
+    if (GetWindowRect(m_window, &rect))
+    {
+        *top = rect.top;
+        *left = rect.left;
+
+        return true;
+    }
+
+    return false;
+}
+
+
 DWORD ProcessHandler::getProcessIdByPartialName(const std::wstring &partialName) const
 {
     DWORD processId = 0;

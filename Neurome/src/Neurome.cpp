@@ -5,9 +5,14 @@ std::atomic<bool> Neurome::m_running(true);
 Neurome::Neurome()
 	: m_code(ResultCode::Unknown),
 	m_settings("osu!", true, 3000, "F6", "models/agent", 64, 64,
-		       512, 3, 32, 3e-4f, 3e-4f, 0.99f, 0.2f),
+		       512, 3, 32, 3e-4f, 3e-4f, 0.99f, 0.2f,
+			   1.0f, 0.8f, 0.6f, 0.4f, 0.2f, -0.5f),
 	m_process(), 
-	m_memoryReader()
+	m_memoryReader(),
+	m_controller(),
+	m_ppo(),
+	m_confidenceThreshold(0.75f),
+	m_isHold(false)
 {
 	setlocale(LC_ALL, "");
 	signal(SIGINT, sigintHandle);
@@ -103,13 +108,15 @@ void Neurome::start()
 		
 		while (m_running && m_memoryReader.isAccessible())
 		{
-			uint32_t sessionCount = 1;
-
-			const std::string header = "Session #" + std::to_string(sessionCount);
-			const uint32_t padding = (lineWidth - header.length()) / 2;
-
 			while (m_running && m_memoryReader.isPlay() && !m_controller.isPause())
 			{
+				uint32_t width, height;
+				if (!m_process.getWindowSizes(&width, &height))
+				{
+					std::cerr << "WARN: The window is minimized. I can't see anything :(" << std::endl;
+					continue;
+				}
+
 				clock_t start = clock();
 				torch::Tensor frame;
 				if (!m_process.getCaptureWindow(&frame, m_settings.inputWidth, m_settings.inputHeight))
@@ -119,13 +126,13 @@ void Neurome::start()
 
 					return;
 				}
-				const double preprocessingTime = double(clock() - start);
+				const clock_t preprocessingTime = clock() - start;
 
 				start = clock();
-				const torch::Tensor prob = m_ppo.inference(frame);
-				const double inferenceTime = double(clock() - start);
+				const torch::Tensor prob = m_ppo.inference(frame).squeeze();
+				const clock_t inferenceTime = clock() - start;
 
-				const float reward = execute(prob);
+				const float reward = execute(prob.to(torch::kCPU), width, height);
 				const bool done = !m_running || !m_memoryReader.isPlay() || m_controller.isPause();
 				
 				start = clock();
@@ -137,13 +144,13 @@ void Neurome::start()
 
 					return;
 				}
-				const double nextPreprocessingTime = double(clock() - start);
+				const clock_t nextPreprocessingTime = clock() - start;
 
 				start = clock();
 				m_ppo.storeExperience(frame, prob, reward, nextFrame, done ? 1.0f : 0.0f, prob);
-				const double expTime = double(clock() - start);
+				const clock_t expTime = clock() - start;
 
-				std::cout << makeLine(padding, lineSymbol) << header << makeLine(padding, lineSymbol) << std::endl;
+				std::cout << makeLine(lineWidth, lineSymbol) << std::endl;
 				std::cout << "frame preprocessing time: " << preprocessingTime << "ms" << std::endl;
 				std::cout << "model inference time: " << inferenceTime << "ms" << std::endl;
 				std::cout << "next frame preprocessing time: " << nextPreprocessingTime << "ms" << std::endl;
@@ -165,10 +172,14 @@ void Neurome::start()
 				std::cout << "osu! status:\t" << (m_memoryReader.isPlay() ? "play" : "menu") << std::endl;
 			}
 
-			std::cout << "model status:\t" << (m_controller.isPause() ? "pause" : "active") << std::endl;
-			std::cout << "osu! status:\t" << (m_memoryReader.isPlay() ? "play" : "menu") << std::endl;
-
-			++sessionCount;
+			//std::cout << "model status:\t" << (m_controller.isPause() ? "pause" : "active") << std::endl;
+			//std::cout << "osu! status:\t" << (m_memoryReader.isPlay() ? "play" : "menu") << std::endl;
+		
+			if (m_isHold)
+			{
+				m_controller.releaseKey();
+				m_isHold = false;
+			}
 		}
 
 		std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -273,26 +284,84 @@ bool Neurome::readUserConfig(UserConfig_t *userConfig) const
 void Neurome::toWindowedMode() const
 {
 	ConfigHandler osuConfig(getCfgPath());
-	osuConfig["Fullscreen"] = "0";
+	osuConfig["Fullscreen"] = "0"; 
 
 	osuConfig.save();
 }
 
-float Neurome::execute(const torch::Tensor &actions) const
+float Neurome::execute(const torch::Tensor &actions, uint32_t width, uint32_t height)
 {
-	return 0;
+	if (actions.sizes() != torch::IntArrayRef({4}) || width == 0 || height == 0)
+	{
+		return 0.0f;
+	}
+
+	uint32_t offsetX = 0;
+	uint32_t offsetY = 0;
+	m_process.getWindowOffset(&offsetY, &offsetX);
+
+	uint32_t lastX, lastY;
+	m_controller.getCursorPos(&lastX, &lastY);
+
+	const std::array<int32_t, 6> lastHits = m_memoryReader.getHits();
+
+	const auto accessor = actions.accessor<float, 1>();
+	
+	const float x = accessor[0] * width;
+	const float y = accessor[1] * height;
+	const float clickConfidence = accessor[2];
+	const float holdConfidence = accessor[3];
+
+	m_controller.mouseTo(offsetX + x, offsetY + y);
+
+	if (clickConfidence >= m_confidenceThreshold)
+	{
+		m_controller.clickKey();
+	}
+	else if (!m_isHold && holdConfidence >= m_confidenceThreshold)
+	{
+		m_controller.pressKey();
+		m_isHold = true;
+	}
+	else if (m_isHold && holdConfidence < m_confidenceThreshold)
+	{
+		m_controller.releaseKey();
+		m_isHold = false;
+	}
+
+	const float positionDelta = std::abs(x - lastX) + std::abs(y - lastY);
+	const float movementReward = std::sin(positionDelta * M_PI / width) * 0.5f;
+
+	std::array<int32_t, 6> hits = m_memoryReader.getHits();
+
+	float hitReward = 0.0f;
+	if (hits != lastHits)
+	{
+		hitReward += (hits[0] - lastHits[0]) * m_settings.rewardPerfect;
+		hitReward += (hits[1] - lastHits[1]) * m_settings.reward300;
+		hitReward += (hits[2] - lastHits[2]) * m_settings.reward200;
+		hitReward += (hits[3] - lastHits[3]) * m_settings.reward100;
+		hitReward += (hits[4] - lastHits[4]) * m_settings.reward50;
+		hitReward += (hits[5] - lastHits[5]) * m_settings.rewardMiss;
+	}
+	
+	return movementReward + hitReward;
 }
 
 Neurome::Settings_t::Settings(std::string clientName, bool isAwaitProcess,
 							  uint32_t awaitProcessDelay, std::string pauseHotKey, std::string modelPath,
 							  uint32_t inputWidth, uint32_t inputHeight,
 						 	  uint32_t hiddenSize, uint32_t epochs, uint32_t bufferSize,
-					 	      float actorLr, float criticLr, float gamma, float epsilon)
+					 	      float actorLr, float criticLr, float gamma, float epsilon,
+						  	  float rewardPerfect, float reward300, float reward200,
+							  float reward100, float reward50, float rewardMiss)
 	: clientName(clientName), isAwaitProcess(isAwaitProcess),
 	awaitProcessDelay(awaitProcessDelay), pauseHotKey(pauseHotKey), modelPath(modelPath),
 	inputWidth(inputWidth), inputHeight(inputHeight),
 	hiddenSize(hiddenSize), epochs(epochs), bufferSize(bufferSize),
-    actorLr(actorLr), criticLr(criticLr), gamma(gamma), epsilon(epsilon) {}
+    actorLr(actorLr), criticLr(criticLr), gamma(gamma), epsilon(epsilon),
+	rewardPerfect(rewardPerfect), reward300(reward300), reward200(reward200), 
+	reward100(reward100), reward50(reward50), rewardMiss(rewardMiss) {}
 
 void Neurome::Settings_t::init(std::string settingsPath)
 {
@@ -335,6 +404,12 @@ Neurome::ResultCode Neurome::Settings_t::merge(ConfigHandler *configHandler)
 	parseFloat(configHandler, &this->criticLr, "criticLr");
 	parseFloat(configHandler, &this->gamma, "gamma");
 	parseFloat(configHandler, &this->epsilon, "epsilon");
+	parseFloat(configHandler, &this->rewardPerfect, "rewardPerfect");
+	parseFloat(configHandler, &this->reward300, "reward300");
+	parseFloat(configHandler, &this->reward200, "reward200");
+	parseFloat(configHandler, &this->reward100, "reward100");
+	parseFloat(configHandler, &this->reward50, "reward50");
+	parseFloat(configHandler, &this->rewardMiss, "rewardMiss");
 
 	return ResultCode::Success;
 }
@@ -355,6 +430,12 @@ void Neurome::Settings_t::print() const
 	std::cout << " - criticLr: " << criticLr << std::endl;
 	std::cout << " - gamma: " << gamma << std::endl;
 	std::cout << " - epsilon: " << epsilon << std::endl;
+	std::cout << " - rewardPerfect: " << rewardPerfect << std::endl;
+	std::cout << " - reward300: " << reward300 << std::endl;
+	std::cout << " - reward200: " << reward200 << std::endl;
+	std::cout << " - reward100: " << reward100 << std::endl;
+	std::cout << " - reward50: " << reward50 << std::endl;
+	std::cout << " - rewardMiss: " << rewardMiss << std::endl;
 }
 
 void Neurome::Settings_t::parseStr(ConfigHandler *configHandler, std::string *value, std::string field)

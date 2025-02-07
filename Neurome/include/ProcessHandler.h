@@ -40,8 +40,11 @@ public:
 
 	bool getCaptureWindow(torch::Tensor *capture, int32_t width, int32_t height) const;
 
-private:
+	bool getWindowSizes(uint32_t *width, uint32_t *height) const;
 
+	bool getWindowOffset(uint32_t *top, uint32_t *left) const;
+
+private:
 	INetFwPolicy2* ProcessPolicy;
 
 	INetFwRules* ProcessRules;

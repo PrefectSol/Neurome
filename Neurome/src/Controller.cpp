@@ -60,6 +60,57 @@ bool Controller::isPause() const
 	return m_isPause.load();
 }
 
+void Controller::getCursorPos(uint32_t *x, uint32_t *y) const
+{
+	if (!x || !y)
+	{
+		return;
+	}
+	
+	POINT pos;
+	GetCursorPos(&pos);
+
+	*x = pos.x;
+	*y = pos.y;
+}
+
+void Controller::mouseTo(uint32_t x, uint32_t y) const
+{
+	SetCursorPos(x, y);
+}
+
+void Controller::clickKey() const
+{
+	if (!m_actionKey)
+	{
+		return;
+	}
+
+	keybd_event(m_actionKey, 0, KEYEVENTF_EXTENDEDKEY, 0);
+	Sleep(10);
+	keybd_event(m_actionKey, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+}
+
+void Controller::pressKey() const
+{
+	if (!m_actionKey)
+	{
+		return;
+	}
+
+	keybd_event(m_actionKey, 0, KEYEVENTF_EXTENDEDKEY, 0);
+}
+
+void Controller::releaseKey() const
+{
+	if (!m_actionKey)
+	{
+		return;
+	}
+
+	keybd_event(m_actionKey, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+}
+
 void Controller::processControl()
 {
 	while (m_isControl)

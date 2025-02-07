@@ -27,6 +27,16 @@ public:
 
 	bool isPause() const;
 
+	void getCursorPos(uint32_t *x, uint32_t *y) const;
+
+	void mouseTo(uint32_t x, uint32_t y) const;
+
+	void clickKey() const;
+
+	void pressKey() const;
+
+	void releaseKey() const;
+
 private:
 	std::atomic<bool> m_isPause;
 
@@ -44,5 +54,4 @@ private:
 
 	bool checkPausePressed() const;
 };
-
 #endif // !__CONTROLLER_H
