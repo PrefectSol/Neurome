@@ -55,7 +55,7 @@ private:
 		std::string pauseHotKey;
 		std::string modelPath;
 		uint32_t inputWidth;
-		uint32_t inputHeight;
+		uint32_t inputHeight; 
 		uint32_t hiddenSize;
 		uint32_t epochs;
 		uint32_t bufferSize;
@@ -69,6 +69,14 @@ private:
 		float reward100;
 		float reward50;
 		float rewardMiss;
+		float lambda;
+		float gradClip;
+		float movementNoise;
+		float actionNoise;
+		float anyHitReward;
+		float hitStreakReward;
+		float targetMovement;
+		float sigmaMovement;
 
 		explicit Settings(std::string clientName, bool isAwaitProcess,
 						  uint32_t awaitProcessDelay, std::string pauseHotKey, std::string modelPath,
@@ -76,7 +84,10 @@ private:
 			              uint32_t hiddenSize, uint32_t epochs, uint32_t bufferSize,
 						  float actorLr, float criticLr, float gamma, float epsilon,
 						  float rewardPerfect, float reward300, float reward200,
-						  float reward100, float reward50, float rewardMiss);
+						  float reward100, float reward50, float rewardMiss,
+						  float lambda, float gradClip,
+						  float movementNoise, float actionNoise,
+						  float anyHitReward, float hitStreakReward, float targetMovement, float sigmaMovement);
 
 		void init(std::string settingsPath);
 
@@ -133,5 +144,11 @@ private:
 	const float m_confidenceThreshold;
 
 	bool m_isHold;
+
+	float m_hitStreak;
+
+	float m_lastDx;
+
+	float m_lastDy;
 };
 #endif // !__NEUROME_H

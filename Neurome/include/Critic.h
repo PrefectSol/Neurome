@@ -1,30 +1,35 @@
 #ifndef __CRITIC_H
 #define __CRITIC_H
 
+#include <cstdint>
+
 #include <torch/torch.h>
 #include <torch/script.h>
-
-#include "MBConvBlock.h"
 
 class Critic : public torch::nn::Module
 {
 public:
-    explicit Critic(uint32_t hiddenSize);
+	explicit Critic(uint32_t hiddenSize);
 
-    torch::Tensor forward(torch::Tensor x);
+	torch::Tensor forward(torch::Tensor x);
 
 private:
-    torch::nn::Conv2d m_stemConv;
-    torch::nn::BatchNorm2d m_stemBn;
+	const uint32_t m_hiddenSize;
 
-    std::shared_ptr<MBConvBlock> m_block1;
-    std::shared_ptr<MBConvBlock> m_block2;
-    std::shared_ptr<MBConvBlock> m_block3;
+	torch::nn::Conv2d m_conv1;
+	torch::nn::BatchNorm2d m_bn1;
 
-    torch::nn::AdaptiveAvgPool2d m_pool;
+	torch::nn::Conv2d m_conv2;
+	torch::nn::BatchNorm2d m_bn2;
 
-    torch::nn::GRU m_gru;
+	torch::nn::Conv2d m_conv3;
+	torch::nn::BatchNorm2d m_bn3;
 
-    torch::nn::Linear m_fc;
+	torch::nn::MultiheadAttention m_attention;
+	torch::nn::LSTM m_lstm;
+
+	torch::nn::Linear m_fc;
+
+	void initWeights();
 };
 #endif // !__CRITIC_H

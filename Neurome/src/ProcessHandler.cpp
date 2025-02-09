@@ -253,10 +253,10 @@ bool ProcessHandler::getCaptureWindow(torch::Tensor *capture, int32_t width, int
     }
 
     const torch::Tensor original = torch::from_blob(buffer.data(), { m_sourceHeight, m_sourceWidth, 4 }, torch::kUInt8).to(torch::kCUDA);;
-    const torch::Tensor resized = torch::upsample_nearest2d(original.permute({ 2, 0, 1 }).unsqueeze(0), { height, width });
-    const torch::Tensor rgb = resized.index({ torch::indexing::Slice(), torch::indexing::Slice(0, 3) }).flip(1);
+    const torch::Tensor grayscale = original.index({ torch::indexing::Slice(), torch::indexing::Slice(), torch::indexing::Slice(0, 3) }).to(torch::kFloat32).mean(-1).unsqueeze(-1);
+    const torch::Tensor resized = torch::upsample_bilinear2d(grayscale.permute({ 2, 0, 1 }).unsqueeze(0), { height, width }, false);
 
-    *capture = rgb.to(torch::kFloat32).div(255.0f);
+    *capture = resized.div(255.0f);
     
     return true;
 }
@@ -280,23 +280,40 @@ bool ProcessHandler::getWindowSizes(uint32_t *width, uint32_t *height) const
     return false;
 }
 
-bool ProcessHandler::getWindowOffset(uint32_t *top, uint32_t *left) const
+bool ProcessHandler::getWindowOffsets(uint32_t *top, uint32_t *left, uint32_t *bottom, uint32_t *right) const
 {
-    if (!m_window || !top || !left)
+    if (!m_window)
     {
         return false;
     }
 
     RECT rect;
-    if (GetWindowRect(m_window, &rect))
+    if (!GetWindowRect(m_window, &rect))
     {
-        *top = rect.top;
-        *left = rect.left;
-
-        return true;
+        return false;
     }
 
-    return false;
+    if (top)
+    {
+        *top = rect.top;
+    }
+
+    if (left)
+    {
+        *left = rect.left;
+    }
+
+    if (bottom)
+    {
+        *bottom = rect.bottom;
+    }
+
+    if (right)
+    {
+        *right = rect.right;
+    }
+
+    return true;
 }
 
 

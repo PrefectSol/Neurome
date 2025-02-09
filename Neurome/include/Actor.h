@@ -1,10 +1,10 @@
 #ifndef __ACTOR_H
 #define __ACTOR_H
 
+#include <cstdint>
+#include <iostream>
 #include <torch/torch.h>
 #include <torch/script.h>
-
-#include "MBConvBlock.h"
 
 class Actor : public torch::nn::Module
 {
@@ -14,18 +14,23 @@ public:
 	torch::Tensor forward(torch::Tensor x);
 
 private:
-    torch::nn::Conv2d m_stemConv;
-    torch::nn::BatchNorm2d m_stemBn;
+	const uint32_t m_hiddenSize;
 
-    std::shared_ptr<MBConvBlock> m_block1;
-    std::shared_ptr<MBConvBlock> m_block2;
-    std::shared_ptr<MBConvBlock> m_block3;
+    torch::nn::Conv2d m_conv1;
+	torch::nn::BatchNorm2d m_bn1;
 
-    torch::nn::AdaptiveAvgPool2d m_pool;
+	torch::nn::Conv2d m_conv2;
+	torch::nn::BatchNorm2d m_bn2;
 
-    torch::nn::GRU m_gru;
+	torch::nn::Conv2d m_conv3;
+	torch::nn::BatchNorm2d m_bn3;
 
-    torch::nn::Linear m_fcCoordinates;
-    torch::nn::Linear m_fcActions;
+	torch::nn::MultiheadAttention m_attention;
+	torch::nn::LSTM m_lstm;
+
+	torch::nn::Linear m_movement;
+	torch::nn::Linear m_action;
+
+	void initWeights();
 };
 #endif // !__ACTOR_H

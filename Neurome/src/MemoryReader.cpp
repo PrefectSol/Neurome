@@ -28,7 +28,7 @@ bool MemoryReader::isPlay() const
 
 std::array<int32_t, 6> MemoryReader::getHits()
 {
-	return { getHitMiss(), getHit50(), getHit100(), getHit200(), getHit300(), getHitPerfect() };
+	return { getHitPerfect(), getHit300(), getHit200(), getHit100(), getHit50(), getHitMiss()};
 }
 
 int32_t MemoryReader::getHitMiss()

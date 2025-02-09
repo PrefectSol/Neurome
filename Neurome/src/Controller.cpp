@@ -2,7 +2,8 @@
 
 Controller::Controller()
 	: m_isPause(true), m_isControl(true),
-	m_contolThread(), m_hotkey(), m_actionKey(0)
+	m_contolThread(),
+	m_hotkey(), m_actionKey(0)
 {
 	m_contolThread = std::thread(&Controller::processControl, this);
 }

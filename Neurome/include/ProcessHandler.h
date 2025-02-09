@@ -42,7 +42,7 @@ public:
 
 	bool getWindowSizes(uint32_t *width, uint32_t *height) const;
 
-	bool getWindowOffset(uint32_t *top, uint32_t *left) const;
+	bool getWindowOffsets(uint32_t *top, uint32_t *left, uint32_t *bottom, uint32_t *right) const;
 
 private:
 	INetFwPolicy2* ProcessPolicy;
