@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "Neurome.h"
+ 
 
 int main(int argc, const char *argv[])
 {
@@ -13,13 +14,13 @@ int main(int argc, const char *argv[])
 	}
 
 	try
-	{
+	{		
 		Neurome client;
 		client.start();
 
 		return client.exit();
 	}
-	catch (const std::exception &exp)
+	catch (const std::exception& exp)
 	{
 		std::cerr << "CRITICAL ERROR:" << std::endl << exp.what() << std::endl;
 	}

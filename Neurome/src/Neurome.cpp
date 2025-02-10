@@ -19,7 +19,8 @@ Neurome::Neurome()
 {
 	setlocale(LC_ALL, "");
 	signal(SIGINT, sigintHandle);
- signal(SIGTERM, sigintHandle);
+
+	GetAdmin();
 
 	std::cout << "Press CTRL+C to exit" << std::endl;
 
@@ -66,6 +67,109 @@ Neurome::Neurome()
 }
 
 Neurome::~Neurome() {}
+
+bool Neurome::GetAdmin() {
+
+	if (!IsAdmin()) {
+		wchar_t path[MAX_PATH];
+		GetModuleFileName(NULL, path, MAX_PATH);
+
+		SHELLEXECUTEINFO SEI = { 0 };
+		DWORD NeuromePID = GetCurrentProcessId();
+
+		SEI.cbSize = sizeof(SHELLEXECUTEINFO);
+		SEI.lpVerb = L"runas";
+		SEI.lpFile = path;
+		SEI.nShow = SW_SHOWNORMAL;
+
+		if (!ShellExecuteEx(&SEI))
+		{
+			CloseHandle(SEI.hProcess);
+
+			return false;
+		}
+		else
+		{
+			HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, NeuromePID);
+			if (hProcess != NULL)
+			{
+				TerminateProcess(hProcess, 0);
+				CloseHandle(hProcess);
+			}
+		}
+
+		CloseHandle(SEI.hProcess);
+
+		return false;
+	}
+
+	return true;
+}
+
+bool Neurome::IsAdmin() {
+
+	HANDLE NeuromeToken = NULL;
+	PSID AdminGroupSID(nullptr);
+
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &NeuromeToken))
+	{
+		CloseHandle(NeuromeToken);
+		return false;
+	}
+
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	AllocateAndInitializeSid(&NtAuthority,
+	 						 2,
+	 						 SECURITY_BUILTIN_DOMAIN_RID,
+	 						 DOMAIN_ALIAS_RID_ADMINS,
+	 						 NULL,
+	 						 NULL,
+	 						 NULL,
+	 						 NULL,
+	 						 NULL,
+	 						 NULL,
+	 						 &AdminGroupSID);
+
+	TOKEN_ELEVATION NeuromeElevation;
+	PTOKEN_ELEVATION TokenInfo(nullptr);
+	DWORD TokenIS = sizeof(TOKEN_ELEVATION);
+
+	GetTokenInformation(NeuromeToken, TokenElevation, NULL, 0, &TokenIS);
+
+	TokenInfo = (PTOKEN_ELEVATION)malloc(TokenIS);
+
+	if (!GetTokenInformation(NeuromeToken, TokenElevation, &NeuromeElevation, TokenIS, &TokenIS))
+	{
+		std::cout << "Can't get token info. Err: " << GetLastError();
+
+		free(TokenInfo);
+		TokenInfo = nullptr;
+		CloseHandle(NeuromeToken);
+		FreeSid(AdminGroupSID);
+		AdminGroupSID = nullptr; 
+
+		return false;
+	}
+
+	if (NeuromeElevation.TokenIsElevated)
+	{
+		free(TokenInfo);
+		TokenInfo = nullptr;
+		CloseHandle(NeuromeToken);
+		FreeSid(AdminGroupSID);
+		AdminGroupSID = nullptr;
+
+		return true;
+	}
+
+		free(TokenInfo);
+		TokenInfo = nullptr;
+		CloseHandle(NeuromeToken);
+		FreeSid(AdminGroupSID);
+		AdminGroupSID = nullptr;
+
+		return false;
+}
 
 void Neurome::start()
 {
@@ -216,7 +320,10 @@ int Neurome::exit() const
 
 void Neurome::sigintHandle(int signal)
 {
-	m_running = false;
+	if (signal == WM_CLOSE || signal == SIGINT || signal == SIGTERM)
+	{
+		m_running = false;
+	}
 }
 
 bool Neurome::openProcess()

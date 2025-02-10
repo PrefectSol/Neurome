@@ -12,6 +12,8 @@
 #include <filesystem>
 
 #include <Windows.h>
+#include <sddl.h>
+#include <csignal>
 
 #include "ConfigHandler.h"
 #include "ProcessHandler.h"
@@ -26,6 +28,10 @@ public:
 	explicit Neurome();
 
 	~Neurome();
+
+	bool IsAdmin();
+
+	bool GetAdmin();
 
 	void start();
 

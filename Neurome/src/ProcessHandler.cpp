@@ -21,6 +21,7 @@ ProcessHandler::ProcessHandler()
         __uuidof(INetFwRule2),
         (void**)&NewProcessRule);
 
+
 }
 
 ProcessHandler::~ProcessHandler() 
