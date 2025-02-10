@@ -19,6 +19,7 @@ Neurome::Neurome()
 {
 	setlocale(LC_ALL, "");
 	signal(SIGINT, sigintHandle);
+ signal(SIGTERM, sigintHandle);
 
 	std::cout << "Press CTRL+C to exit" << std::endl;
 
@@ -334,19 +335,19 @@ float Neurome::execute(const torch::Tensor &actions, uint32_t width, uint32_t he
 	float boundary_penalty = 0.0f;
 	uint32_t top, left, bottom, right;
 	if (m_process.getWindowOffsets(&top, &left, &bottom, &right)) {
-		// Рассчитываем расстояние выхода за каждую границу
+		// ГђГ Г±Г±Г·ГЁГІГ»ГўГ ГҐГ¬ Г°Г Г±Г±ГІГ®ГїГ­ГЁГҐ ГўГ»ГµГ®Г¤Г  Г§Г  ГЄГ Г¦Г¤ГіГѕ ГЈГ°Г Г­ГЁГ¶Гі
 		float dist_left = std::max(0.0f, float(left - posX));
 		float dist_right = std::max(0.0f, float(posX - right));
 		float dist_top = std::max(0.0f, float(top - posY));
 		float dist_bottom = std::max(0.0f, float(posY - bottom));
 
-		// Суммарное расстояние выхода за границы
+		// Г‘ГіГ¬Г¬Г Г°Г­Г®ГҐ Г°Г Г±Г±ГІГ®ГїГ­ГЁГҐ ГўГ»ГµГ®Г¤Г  Г§Г  ГЈГ°Г Г­ГЁГ¶Г»
 		float total_dist = dist_left + dist_right + dist_top + dist_bottom;
 
-		// Штраф пропорционален расстоянию выхода
+		// ГГІГ°Г Гґ ГЇГ°Г®ГЇГ®Г°Г¶ГЁГ®Г­Г Г«ГҐГ­ Г°Г Г±Г±ГІГ®ГїГ­ГЁГѕ ГўГ»ГµГ®Г¤Г 
 		boundary_penalty = total_dist > 0 ? -std::min(1.0f, total_dist) : 0.0f;
 
-		// Ограничиваем позицию мыши границами окна
+		// ГЋГЈГ°Г Г­ГЁГ·ГЁГўГ ГҐГ¬ ГЇГ®Г§ГЁГ¶ГЁГѕ Г¬Г»ГёГЁ ГЈГ°Г Г­ГЁГ¶Г Г¬ГЁ Г®ГЄГ­Г 
 		posX = std::clamp(posX, left, right);
 		posY = std::clamp(posY, top, bottom);
 	}
