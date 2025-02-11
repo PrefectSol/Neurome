@@ -1,28 +1,29 @@
-#include <iostream>
-
-#include "Neurome.h"
+#include "NeuromeGUI.h"
 
 int main(int argc, const char *argv[])
 {
-	if (argc != 1)
-	{
-		std::cerr << "ERR: Arguments are not supported" << std::endl;
-		std::cout << "Example: " << argv[0] << std::endl;
+    if (argc != 1)
+    {
+        Messenger::error("Command line arguments are not supported");
+        return 1;
+    }
 
-		return -1;
-	}
+    if (ProcessHandler::requestAdmin() == 1)
+    {
+        return 0;
+    }
 
-	try
-	{
-		Neurome client;
-		client.start();
+    NeuromeGUI app;
+    try
+    {
+        app.render();
+    }
+    catch (const std::exception &exp)
+    {
+        Messenger::error(exp.what());
+        return 1;
+    }
 
-		return client.exit();
-	}
-	catch (const std::exception &exp)
-	{
-		std::cerr << "CRITICAL ERROR:" << std::endl << exp.what() << std::endl;
-	}
-
-	return -1;
+    return 0;
 }
+

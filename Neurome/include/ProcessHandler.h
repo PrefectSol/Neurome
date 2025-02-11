@@ -26,6 +26,10 @@ public:
 
 	~ProcessHandler();
 
+	static int requestAdmin();
+
+	static bool isAdmin();
+
 	bool getProcess(std::string clientName);
 
 	bool getProcess(std::string clientName, bool *loop, uint32_t loopDelay = 0);

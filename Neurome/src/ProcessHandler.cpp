@@ -29,6 +29,94 @@ ProcessHandler::~ProcessHandler()
     cleanupCapture();
 }
 
+int ProcessHandler::requestAdmin()
+{
+    if (isAdmin())
+    {
+        return 0;
+    }
+
+    std::wstring path(MAX_PATH, L'\0');
+    GetModuleFileName(NULL, &path[0], MAX_PATH);
+
+    const DWORD currentPID = GetCurrentProcessId();
+
+    SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
+    sei.lpVerb = L"runas";
+    sei.lpFile = path.c_str();
+    sei.nShow = SW_SHOWNORMAL;
+
+    if (ShellExecuteEx(&sei))
+    {
+        CloseHandle(sei.hProcess);
+
+        return 1;
+    }
+    
+    return -1;
+}
+
+bool ProcessHandler::isAdmin()
+{
+    struct RAIICleanup 
+    {
+        std::unique_ptr<void, decltype(&FreeSid)> adminSid;
+        std::unique_ptr<void, decltype(&free)> tokenInfo;
+
+        HANDLE token;
+
+        RAIICleanup() : adminSid(nullptr, FreeSid), 
+                        tokenInfo(nullptr, free),
+                        token(nullptr) {}
+
+        ~RAIICleanup() 
+        {
+            if (token)
+            {
+                CloseHandle(token);
+            }
+        }
+    } cleanup;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &cleanup.token)) 
+    {
+        return false;
+    }
+
+    SID_IDENTIFIER_AUTHORITY ntAuthority = SECURITY_NT_AUTHORITY;
+    PSID adminSid;
+    if (!AllocateAndInitializeSid(&ntAuthority, 2,
+                                  SECURITY_BUILTIN_DOMAIN_RID,
+                                  DOMAIN_ALIAS_RID_ADMINS,
+                                  0, 0, 0, 0, 0, 0,
+                                  &adminSid)) 
+    {
+        return false;
+    }
+
+    cleanup.adminSid.reset(adminSid);
+
+    DWORD tokenSize = sizeof(TOKEN_ELEVATION);
+    GetTokenInformation(cleanup.token, TokenElevation, nullptr, 0, &tokenSize);
+
+    const auto tokenInfo = static_cast<PTOKEN_ELEVATION>(malloc(tokenSize));
+    if (!tokenInfo)
+    {
+        return false;
+    }
+    
+    cleanup.tokenInfo.reset(tokenInfo);
+
+    TOKEN_ELEVATION elevation{};
+    if (!GetTokenInformation(cleanup.token, TokenElevation,
+                             &elevation, tokenSize, &tokenSize)) 
+    {
+        return false;
+    }
+
+    return elevation.TokenIsElevated != 0;
+}
+
 bool ProcessHandler::getProcess(std::string clientName)
 {
     if (clientName.empty())
