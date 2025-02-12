@@ -34,14 +34,42 @@ private:
 
 	const std::string m_windowTitle;
 
-	const uint32_t m_windowWidth;
-	const uint32_t m_windowHeight;
+	int m_windowWidth;
+	int m_windowHeight;
 
 	bool m_initalized;
 
 	GLFWwindow *m_window;
-	ImVec4 m_clearColor;
+
+	float m_settingsWidth;
+	float m_canvasHeight;
+	float m_manageWidth;
+
+	bool m_isDragging;
+	double m_dragStartX;
+	double m_dragStartY;
+
+	bool m_isResizing = false;
+	int m_resizeEdge = 0;
 
 	void update();
+	
+	void setInitialWindowPos() const;
+
+	float beginMenuBar();
+
+	void checkDragging();
+
+	void checkResize();
+
+	void resizeWindow();
+
+	void beginSettings(float menuBarHeight, ImGuiWindowFlags windowFlags);
+
+	void beginCanvas(float menuBarHeight, ImGuiWindowFlags windowFlags);
+
+	void beginManage(float menuBarHeight, ImGuiWindowFlags windowFlags);
+
+	void beginInfo(float menuBarHeight, ImGuiWindowFlags windowFlags);
 };
 #endif // !__NEUROME_GUI_H
