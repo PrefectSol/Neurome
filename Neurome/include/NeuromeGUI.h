@@ -49,9 +49,6 @@ private:
 	double m_dragStartX;
 	double m_dragStartY;
 
-	bool m_isResizing = false;
-	int m_resizeEdge = 0;
-
 	void update();
 	
 	void setInitialWindowPos() const;
@@ -59,10 +56,6 @@ private:
 	float beginMenuBar();
 
 	void checkDragging();
-
-	void checkResize();
-
-	void resizeWindow();
 
 	void beginSettings(float menuBarHeight, ImGuiWindowFlags windowFlags);
 

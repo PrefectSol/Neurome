@@ -16,7 +16,7 @@ NeuromeGUI::NeuromeGUI() noexcept
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
     m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), nullptr, nullptr);
     if (!m_window) 
@@ -89,8 +89,6 @@ void NeuromeGUI::render()
         beginManage(menuBarHeight, windowFlags);
         beginInfo(menuBarHeight, windowFlags);
 
-        checkResize();
-        resizeWindow();
         update();
     }
 }
@@ -214,118 +212,6 @@ void NeuromeGUI::checkDragging()
         else
         {
             m_isDragging = false;
-        }
-    }
-}
-
-void NeuromeGUI::checkResize()
-{
-    GLFWcursor *standardCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-    GLFWcursor *horizontalResizeCursor = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-    GLFWcursor *verticalResizeCursor = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-    GLFWcursor *diagonalResizeCursor1 = glfwCreateStandardCursor(GLFW_RESIZE_NWSE_CURSOR);
-    GLFWcursor *diagonalResizeCursor2 = glfwCreateStandardCursor(GLFW_RESIZE_NESW_CURSOR);
-
-    double mouseX, mouseY;
-    glfwGetCursorPos(m_window, &mouseX, &mouseY);
-
-    int windowX, windowY, windowWidth, windowHeight;
-    glfwGetWindowPos(m_window, &windowX, &windowY);
-    glfwGetWindowSize(m_window, &windowWidth, &windowHeight);
-
-    const int RESIZE_BORDER = 5; // Размер области для захвата
-
-    bool onLeft = mouseX >= windowX && mouseX <= windowX + RESIZE_BORDER;
-    bool onRight = mouseX >= windowX + windowWidth - RESIZE_BORDER && mouseX <= windowX + windowWidth;
-    bool onTop = mouseY >= windowY && mouseY <= windowY + RESIZE_BORDER;
-    bool onBottom = mouseY >= windowY + windowHeight - RESIZE_BORDER && mouseY <= windowY + windowHeight;
-
-    // Определяем край для изменения размера
-    if (onLeft && onTop) m_resizeEdge = 5;
-    else if (onRight && onTop) m_resizeEdge = 6;
-    else if (onLeft && onBottom) m_resizeEdge = 7;
-    else if (onRight && onBottom) m_resizeEdge = 8;
-    else if (onLeft) m_resizeEdge = 1;
-    else if (onRight) m_resizeEdge = 2;
-    else if (onTop) m_resizeEdge = 3;
-    else if (onBottom) m_resizeEdge = 4;
-    else m_resizeEdge = 0;
-
-    // Меняем курсор в зависимости от края
-    if (m_resizeEdge == 1 || m_resizeEdge == 2)
-        glfwSetCursor(m_window, horizontalResizeCursor);
-    else if (m_resizeEdge == 3 || m_resizeEdge == 4)
-        glfwSetCursor(m_window, verticalResizeCursor);
-    else if (m_resizeEdge == 5 || m_resizeEdge == 8)
-        glfwSetCursor(m_window, diagonalResizeCursor1);
-    else if (m_resizeEdge == 6 || m_resizeEdge == 7)
-        glfwSetCursor(m_window, diagonalResizeCursor2);
-    else
-        glfwSetCursor(m_window, standardCursor);
-}
-
-void NeuromeGUI::resizeWindow()
-{
-    if (ImGui::IsMouseClicked(0) && m_resizeEdge != 0)
-    {
-        m_isResizing = true;
-        glfwGetCursorPos(m_window, &m_dragStartX, &m_dragStartY);
-    }
-
-    if (m_isResizing)
-    {
-        double currentX, currentY;
-        glfwGetCursorPos(m_window, &currentX, &currentY);
-
-        if (ImGui::IsMouseDown(0))
-        {
-            int windowX, windowY, windowWidth, windowHeight;
-            glfwGetWindowPos(m_window, &windowX, &windowY);
-            glfwGetWindowSize(m_window, &windowWidth, &windowHeight);
-
-            int deltaX = currentX - m_dragStartX;
-            int deltaY = currentY - m_dragStartY;
-
-            // Обновляем размеры и позицию в зависимости от края
-            switch (m_resizeEdge)
-            {
-            case 1: // Левый край
-                glfwSetWindowPos(m_window, windowX + deltaX, windowY);
-                glfwSetWindowSize(m_window, windowWidth - deltaX, windowHeight);
-                break;
-            case 2: // Правый край
-                glfwSetWindowSize(m_window, windowWidth + deltaX, windowHeight);
-                break;
-            case 3: // Верхний край
-                glfwSetWindowPos(m_window, windowX, windowY + deltaY);
-                glfwSetWindowSize(m_window, windowWidth, windowHeight - deltaY);
-                break;
-            case 4: // Нижний край
-                glfwSetWindowSize(m_window, windowWidth, windowHeight + deltaY);
-                break;
-            case 5: // Левый-верхний угол
-                glfwSetWindowPos(m_window, windowX + deltaX, windowY + deltaY);
-                glfwSetWindowSize(m_window, windowWidth - deltaX, windowHeight - deltaY);
-                break;
-            case 6: // Правый-верхний угол
-                glfwSetWindowPos(m_window, windowX, windowY + deltaY);
-                glfwSetWindowSize(m_window, windowWidth + deltaX, windowHeight - deltaY);
-                break;
-            case 7: // Левый-нижний угол
-                glfwSetWindowPos(m_window, windowX + deltaX, windowY);
-                glfwSetWindowSize(m_window, windowWidth - deltaX, windowHeight + deltaY);
-                break;
-            case 8: // Правый-нижний угол
-                glfwSetWindowSize(m_window, windowWidth + deltaX, windowHeight + deltaY);
-                break;
-            }
-
-            m_dragStartX = currentX;
-            m_dragStartY = currentY;
-        }
-        else
-        {
-            m_isResizing = false;
         }
     }
 }
