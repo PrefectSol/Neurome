@@ -572,7 +572,4 @@ void Neurome_out::Settings_t::parseKey(ConfigHandler *configHandler, std::string
 	(*configHandler)[field] = *value;
 }
 
-Neurome_out::UserConfig_t::UserConfig()
-	: keyLeft(""), isFullscreen(false) {}
-
 

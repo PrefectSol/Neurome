@@ -34,6 +34,8 @@ public:
 
 	bool getProcess(std::string clientName, bool *loop, uint32_t loopDelay = 0);
 
+	void release();
+
 	bool restart();
 
 	bool blockTraffic();
@@ -80,6 +82,8 @@ private:
 	DWORD getProcessIdByPartialName(const std::wstring &partialName) const;
 
 	HWND getWindowByProcessId(DWORD processId) const;
+
+	void initializeRules();
 
 	bool initializeCapture();
 

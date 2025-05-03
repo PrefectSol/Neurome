@@ -123,7 +123,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>K:\Libraries\CUDA\v12.4\include;K:\Code\C++\Neurome\Neurome\include;K:\Libraries\opencv\build\include;K:\Libraries\osu-memory\native\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include\torch\csrc\api\include;K:\Code\C++\Neurome\Neurome\vendor\imgui\backends\include;K:\Libraries\glfw-3.4.bin.WIN64\include;K:\Code\C++\Neurome\Neurome\vendor\imgui\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>K:\Libraries\CUDA\v12.4\include;K:\Code\C++\Neurome\Neurome\include;K:\Libraries\opencv\build\include;K:\Libraries\osu-memory\native\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include\torch\csrc\api\include;K:\Code\C++\Neurome\Neurome\vendor\imgui\backends\include;K:\Libraries\glfw-3.4.bin.WIN64\include;K:\Code\C++\Neurome\Neurome\vendor\imgui\include;K:\Code\C++\Neurome\Neurome\vendor\bxzstr\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
@@ -164,12 +164,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+    <None Include="vendor\bxzstr\include\config.hpp.in" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Critic.h" />
     <ClInclude Include="include\Actor.h" />
     <ClInclude Include="include\ConfigHandler.h" />
     <ClInclude Include="include\Controller.h" />
+    <ClInclude Include="include\def.hpp" />
     <ClInclude Include="include\MemoryReader.h" />
     <ClInclude Include="include\Neurome_out.h" />
     <ClInclude Include="include\ProcessHandler.h" />
@@ -180,6 +182,15 @@
     <ClInclude Include="include\Neurome.h" />
     <ClInclude Include="include\NeuromeGUI.h" />
     <ClInclude Include="include\Messenger.h" />
+    <ClInclude Include="vendor\bxzstr\include\bxzstr.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\bz_stream_wrapper.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\compression_types.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\config.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\lzma_stream_wrapper.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\stream_wrapper.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\strict_fstream.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\zstd_stream_wrapper.hpp" />
+    <ClInclude Include="vendor\bxzstr\include\z_stream_wrapper.hpp" />
     <ClInclude Include="vendor\imgui\backends\include\imgui_impl_glfw.h" />
     <ClInclude Include="vendor\imgui\backends\include\imgui_impl_opengl3.h" />
     <ClInclude Include="vendor\imgui\backends\include\imgui_impl_opengl3_loader.h" />

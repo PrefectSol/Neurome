@@ -111,8 +111,6 @@ private:
 	{
 		std::string keyLeft;
 		bool isFullscreen;
-
-		explicit UserConfig();
 	} UserConfig_t;
 	
 	static void sigintHandle(int signal);

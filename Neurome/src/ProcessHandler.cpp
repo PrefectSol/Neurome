@@ -3,8 +3,19 @@
 ProcessHandler::ProcessHandler()
     : m_window(NULL), m_hdcWindow(NULL), m_hdcMemory(NULL),
     m_hBitmap(NULL), m_windowRect(), m_sourceWidth(0), m_sourceHeight(0),
-    m_processId(0), ProcessPolicy(nullptr), ProcessRules(nullptr), NewProcessRule(nullptr) {
-    
+    m_processId(0), ProcessPolicy(nullptr), ProcessRules(nullptr), NewProcessRule(nullptr) 
+{
+    initializeRules();
+}
+
+ProcessHandler::~ProcessHandler() 
+{
+    CleanUpNetBarrier();
+    cleanupCapture();
+}
+
+void ProcessHandler::initializeRules()
+{
     RuleName = SysAllocString((BSTR)L"NetBarrier");
 
     CoInitialize(NULL);
@@ -13,20 +24,13 @@ ProcessHandler::ProcessHandler()
         NULL,
         CLSCTX_ALL,
         __uuidof(INetFwPolicy2),
-        (void**)&ProcessPolicy);
+        (void **)&ProcessPolicy);
 
     NewRuleResult = CoCreateInstance(__uuidof(NetFwRule),
         NULL,
         CLSCTX_ALL,
         __uuidof(INetFwRule2),
-        (void**)&NewProcessRule);
-
-}
-
-ProcessHandler::~ProcessHandler() 
-{
-    CleanUpNetBarrier();
-    cleanupCapture();
+        (void **)&NewProcessRule);
 }
 
 int ProcessHandler::requestAdmin()
@@ -172,6 +176,18 @@ bool ProcessHandler::getProcess(std::string clientName, bool *loop, uint32_t loo
     return initializeCapture();
 }
 
+void ProcessHandler::release()
+{
+    CleanUpNetBarrier();
+    cleanupCapture();
+
+    m_sourceHeight = 0;
+    m_sourceWidth = 0;
+    m_processId = 0;
+
+    initializeRules();
+}
+
 bool ProcessHandler::restart()
 {
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE, FALSE, m_processId);
@@ -226,6 +242,7 @@ bool ProcessHandler::blockTraffic()
         RuleResult = ProcessPolicy->get_Rules(&ProcessRules);
     }
     else {
+        SysFreeString(BSTRPath);
         return FALSE;
     }
 
@@ -502,9 +519,12 @@ bool ProcessHandler::initializeCapture()
     return true;
 }
 
-void ProcessHandler::CleanUpNetBarrier(){
-
-    RuleResult = ProcessRules->Remove(RuleName);
+void ProcessHandler::CleanUpNetBarrier()
+{
+    if (RuleName)
+    {
+        RuleResult = ProcessRules->Remove(RuleName);
+    }
 
     if (!ProcessRules)
     {
@@ -519,7 +539,7 @@ void ProcessHandler::CleanUpNetBarrier(){
         ProcessPolicy = nullptr;
     }
 
-    if (!ProcessRules)
+    if (!NewProcessRule)
     {
         NewProcessRule->Release();
         NewProcessRule = nullptr;
