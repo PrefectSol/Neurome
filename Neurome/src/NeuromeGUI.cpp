@@ -25,7 +25,7 @@ NeuromeGUI::NeuromeGUI() noexcept
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    //glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
     glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
 
     m_window.reset(glfwCreateWindow(m_windowWidth, m_windowHeight, env::windowTitle, nullptr, nullptr));
