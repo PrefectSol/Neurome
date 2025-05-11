@@ -26,9 +26,15 @@ public:
 
 	~ProcessHandler();
 
+	static int requestAdmin();
+
+	static bool isAdmin();
+
 	bool getProcess(std::string clientName);
 
 	bool getProcess(std::string clientName, bool *loop, uint32_t loopDelay = 0);
+
+	void release();
 
 	bool restart();
 
@@ -76,6 +82,8 @@ private:
 	DWORD getProcessIdByPartialName(const std::wstring &partialName) const;
 
 	HWND getWindowByProcessId(DWORD processId) const;
+
+	void initializeRules();
 
 	bool initializeCapture();
 

@@ -43,7 +43,7 @@ bool isFloat(const std::string &str)
 	return pos == str.length();
 }
 
-bool verifyKey(const std::string &str) 
+bool verifyKey(const std::string &str)
 {
 
 	const std::unordered_map<std::string, int> validKeys = 
@@ -91,4 +91,33 @@ bool verifyKey(const std::string &str)
 std::string makeLine(uint32_t width, char symbol)
 {
 	return std::string(width, symbol);
+}
+
+bool createFileDir(const std::string &path)
+{
+	if (path.empty())
+	{
+		return false;
+	}
+
+	try
+	{
+		std::filesystem::path filePath(path);
+		if (!filePath.has_parent_path())
+		{
+			return false;
+		}
+		
+		const std::filesystem::path parentPath = filePath.parent_path();
+		if (std::filesystem::exists(parentPath))
+		{
+			return true;
+		}
+
+		return std::filesystem::create_directories(parentPath);
+	}
+	catch (...)
+	{
+		return false;
+	}
 }

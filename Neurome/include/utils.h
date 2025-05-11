@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <sstream>
+#include <filesystem>
 
 #include <Windows.h>
 
@@ -19,5 +20,7 @@ bool isFloat(const std::string &str);
 bool verifyKey(const std::string &str);
 
 std::string makeLine(uint32_t width, char symbol);
+
+bool createFileDir(const std::string &path);
 
 #endif // !__UTILS_H
