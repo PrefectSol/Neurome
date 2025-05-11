@@ -39,10 +39,16 @@
     <ClCompile Include="src\MBConvBlock.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\Agent.cpp">
+    <ClCompile Include="src\ProximalPolicyOptimization.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="src\ProximalPolicyOptimization.cpp">
+    <ClCompile Include="src\Actor.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MultiHeadAttention.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Critic.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,10 +77,16 @@
     <ClInclude Include="include\MBConvBlock.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="include\Agent.h">
+    <ClInclude Include="include\ProximalPolicyOptimization.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
-    <ClInclude Include="include\ProximalPolicyOptimization.h">
+    <ClInclude Include="include\Actor.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MultiHeadAttention.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Critic.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

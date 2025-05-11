@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <EmbedManifest>true</EmbedManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -105,14 +108,15 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>D:\opencv\build\include;D:\libtorch\include;D:\libtorch\include\torch\csrc\api\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Projects\Neurome\Neurome\osu-memory\native\include;D:\Librares\opencv\build\include;D:\Librares\libtorch\include;D:\Librares\libtorch\include\torch\csrc\api\include;D:\Projects\Neurome\Neurome\include;D:\Librares\Cuda\CudaLibs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\libtorch\lib;D:\opencv\build\x64\vc16\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Projects\Neurome\Neurome\osu-memory\x64\Debug;D:\Librares\Cuda\CudaLibs\lib\x64;D:\Librares\libtorch\lib;D:\Librares\opencv\build\x64\vc16\lib;D:\Librares\libtorch\include\torch\csrc\api\include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
-      <AddModuleNamesToAssembly>opencv_world4100.lib;opencv_world4100d.lib;c10_cuda.lib;caffe2_nvrtc.lib;cpuinfo.lib;dnnl.lib;fbgemm.lib;fmt.lib;kineto.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;microkernels-prod.lib;pthreadpool.lib;sleef.lib;torch.lib;torch_cpu.lib;torch_cuda.lib;XNNPACK.lib;asmjit.lib;c10.lib;%(AddModuleNamesToAssembly)</AddModuleNamesToAssembly>
+      <AddModuleNamesToAssembly>%(AddModuleNamesToAssembly)</AddModuleNamesToAssembly>
+      <AdditionalDependencies>opencv_world4100.lib;opencv_world4100d.lib;osu-memory.lib;nvJitLink.lib;nvJitLink_static.lib;OpenCL.lib;cuda.lib;cudadevrt.lib;cudart.lib;cudart_static.lib;nvfatbin.lib;nvfatbin_static.lib;c10.lib;c10_cuda.lib;caffe2_nvrtc.lib;cpuinfo.lib;dnnl.lib;fbgemm.lib;fmt.lib;kineto.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;pthreadpool.lib;sleef.lib;torch.lib;torch_cpu.lib;torch_cuda.lib;XNNPACK.lib;asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -123,7 +127,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>K:\Libraries\CUDA\v12.4\include;K:\Code\C++\Neurome\Neurome\include;K:\Libraries\opencv\build\include;K:\Libraries\osu-memory\native\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\include\torch\csrc\api\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Librares\osu-memory\native\include;D:\Librares\opencv\build\include;D:\Librares\libtorch\include;D:\Librares\libtorch\include\torch\csrc\api\include;D:\Projects\Neurome\Neurome\include;D:\Librares\Cuda\CudaLibs\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
@@ -132,13 +136,22 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>K:\Libraries\opencv\build\x64\vc16\lib;K:\Libraries\osu-memory\x64\Release;K:\Libraries\CUDA\v12.4\lib\x64;K:\Libraries\libtorch-win-shared-with-deps-2.5.1+cu124\libtorch\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Librares\osu-memory\x64\Debug;D:\Librares\Cuda\CudaLibs\lib\x64;D:\Librares\libtorch\lib;D:\Librares\opencv\build\x64\vc16\lib;D:\Librares\libtorch\include\torch\csrc\api\include</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_world4100.lib;opencv_world4100d.lib;osu-memory.lib;nvJitLink.lib;nvJitLink_static.lib;OpenCL.lib;cuda.lib;cudadevrt.lib;cudart.lib;cudart_static.lib;nvfatbin.lib;nvfatbin_static.lib;c10.lib;c10_cuda.lib;caffe2_nvrtc.lib;cpuinfo.lib;dnnl.lib;fbgemm.lib;fmt.lib;kineto.lib;libprotobuf.lib;libprotobuf-lite.lib;libprotoc.lib;pthreadpool.lib;sleef.lib;torch.lib;torch_cpu.lib;torch_cuda.lib;XNNPACK.lib;asmjit.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <ManifestResourceCompile>
+      <ResourceOutputFileName>
+      </ResourceOutputFileName>
+    </ManifestResourceCompile>
+    <Manifest>
+      <AdditionalManifestFiles> %(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Actor.cpp" />
+    <ClCompile Include="src\Critic.cpp" />
+    <ClCompile Include="src\MultiHeadAttention.cpp" />
     <ClCompile Include="src\ProximalPolicyOptimization.cpp" />
-    <ClCompile Include="src\Agent.cpp" />
     <ClCompile Include="src\MBConvBlock.cpp" />
     <ClCompile Include="src\ConfigHandler.cpp" />
     <ClCompile Include="src\Controller.cpp" />
@@ -152,10 +165,12 @@
     <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Agent.h" />
+    <ClInclude Include="include\Actor.h" />
     <ClInclude Include="include\ConfigHandler.h" />
     <ClInclude Include="include\Controller.h" />
+    <ClInclude Include="include\Critic.h" />
     <ClInclude Include="include\MemoryReader.h" />
+    <ClInclude Include="include\MultiHeadAttention.h" />
     <ClInclude Include="include\Neurome.h" />
     <ClInclude Include="include\ProcessHandler.h" />
     <ClInclude Include="include\utils.h" />

@@ -70,40 +70,40 @@ Neurome::~Neurome() {}
 
 bool Neurome::GetAdmin() {
 
-	if (!IsAdmin()) {
-		wchar_t path[MAX_PATH];
-		GetModuleFileName(NULL, path, MAX_PATH);
+	if (IsAdmin()) 
+	{
+		return true;
+	}
+	wchar_t path[MAX_PATH];
+	GetModuleFileName(NULL, path, MAX_PATH);
 
-		SHELLEXECUTEINFO SEI = { 0 };
-		DWORD NeuromePID = GetCurrentProcessId();
+	SHELLEXECUTEINFO SEI = { 0 };
+	DWORD NeuromePID = GetCurrentProcessId();
 
-		SEI.cbSize = sizeof(SHELLEXECUTEINFO);
-		SEI.lpVerb = L"runas";
-		SEI.lpFile = path;
-		SEI.nShow = SW_SHOWNORMAL;
+	SEI.cbSize = sizeof(SHELLEXECUTEINFO);
+	SEI.lpVerb = L"runas";
+	SEI.lpFile = path;
+	SEI.nShow = SW_SHOWNORMAL;
 
-		if (!ShellExecuteEx(&SEI))
-		{
-			CloseHandle(SEI.hProcess);
-
-			return false;
-		}
-		else
-		{
-			HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, NeuromePID);
-			if (hProcess != NULL)
-			{
-				TerminateProcess(hProcess, 0);
-				CloseHandle(hProcess);
-			}
-		}
-
+	if (!ShellExecuteEx(&SEI))
+	{
 		CloseHandle(SEI.hProcess);
 
 		return false;
 	}
+	else
+	{
+		HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, NeuromePID);
+		if (hProcess != NULL)
+		{
+			TerminateProcess(hProcess, 0);
+			CloseHandle(hProcess);
+		}
+	}
 
-	return true;
+	CloseHandle(SEI.hProcess);
+
+	return false;
 }
 
 bool Neurome::IsAdmin() {
