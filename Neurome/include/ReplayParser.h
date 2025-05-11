@@ -34,27 +34,6 @@ private:
 
 	BYTE* DataPtr;
 
-	std::bitset<32> ModesUsed;
-	std::string MapHash;
-	std::string ReplayHash;
-	std::string UserName;
-	std::string Mode;
-	SYSTEMTIME sDate;
-	int32_t OSU_Version;
-	int32_t TotalScore;
-	int16_t HitsCount300;
-	int16_t HitsCount100;
-	int16_t HitsCount50;
-	int16_t HitsCountGekis;
-	int16_t HitsCountKatus;
-	int16_t MissCount;
-	int16_t HighestCombo;
-	long OnlineID;
-	bool IdealPass;
-	
-	std::vector<HealthBar> HP;
-	
-	
 	void Read(const std::vector<BYTE>& Replay, char& Storage, uint32_t HowMany);
 	
 	void WhatModes();
@@ -77,11 +56,32 @@ public:
 
 	ReplayParser(std::string Path);
 
+	std::bitset<32> ModesUsed;
+	std::string MapHash;
+	std::string ReplayHash;
+	std::string UserName;
+	std::string Mode;
+	SYSTEMTIME sDate;
+	int32_t OSU_Version;
+	int32_t TotalScore;
+	int16_t HitsCount300;
+	int16_t HitsCount100;
+	int16_t HitsCount50;
+	int16_t HitsCountGekis;
+	int16_t HitsCountKatus;
+	int16_t MissCount;
+	int16_t HighestCombo;
+	long OnlineID;
+	bool IdealPass;
+	
+	std::vector<HealthBar> HP;
+
 	~ReplayParser();
 
 	void PrintReplayInfo();
 
 	std::vector<PlayerActivity> Activity;
+
 	void ParseOSR();
 };
 

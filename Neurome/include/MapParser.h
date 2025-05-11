@@ -98,15 +98,6 @@ private:
 	BYTE* DataPtr;
 	BYTE* EndPtr;
 
-	Metadata MapMetadata;
-	Difficulty MapDif;
-	EditorInfo MapEditor;
-	GeneralInfo MapGeneral;
-	
-	std::vector<Note> Notes;
-	std::vector<Colour> MapColours;
-	std::vector<TimingPoint> MapTimingPoints;
-	
 	bool FileToVector(std::vector<BYTE>& Map);
 
 	bool Read(const std::vector<BYTE>& Map, char& Storage, uint32_t HowMany);
@@ -134,7 +125,15 @@ private:
 	std::vector<TimingPoint> GetTimingPoints(const std::vector<BYTE>& Map);
 
 public:
-
+	Metadata MapMetadata;
+	Difficulty MapDif;
+	EditorInfo MapEditor;
+	GeneralInfo MapGeneral;
+	
+	std::vector<Note> Notes;
+	std::vector<Colour> MapColours;
+	std::vector<TimingPoint> MapTimingPoints;
+	
 	MapParser(std::string Path);
 
 	~MapParser();
